@@ -7,6 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
+    "hooks:install": "git config core.hooksPath .githooks",
     "gate:local": "npm run check:task && npm run check:diff-size && npm run check:godfiles",
     "gate:pr": "npm run check:task && npm run check:diff-size && npm run check:godfiles",
     "gate:main": "npm run gate:pr",

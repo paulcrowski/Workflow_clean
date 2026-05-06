@@ -49,9 +49,25 @@ const generatedPatterns = [
   /\.gen\./
 ];
 
+const workflowPatterns = [
+  /^README\.md$/,
+  /^AGENTS\.md$/,
+  /^AGENT_DEV_POLICY\.md$/,
+  /^CODEX\.md$/,
+  /^CLAUDE\.md$/,
+  /^RELEASE_GATE\.md$/,
+  /^TESTING\.md$/,
+  /^ParkingLot\.md$/,
+  /^docs\//,
+  /^tasks\//,
+  /^\.github\//,
+  /^\.githooks\//
+];
+
 function isIgnoredLargeFile(file) {
   return ignoredLargeFiles.some(name => file.endsWith(name)) ||
-    generatedPatterns.some(pattern => pattern.test(file));
+    generatedPatterns.some(pattern => pattern.test(file)) ||
+    workflowPatterns.some(pattern => pattern.test(file));
 }
 
 let total = 0;

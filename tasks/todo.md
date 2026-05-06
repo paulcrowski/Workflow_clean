@@ -4,132 +4,132 @@
 STRUCTURE_FIX
 
 Uzasadnienie trybu:
-Naprawa dotyczy workflow startera, skryptów guardów i CI.
+Dodanie README i repozytoryjnych hookow porzadkuje sposob uzycia workflow w nowych projektach.
 
 ## Cel / Outcome
-Starter workflow ma mieć guardy, które nie przepuszczają pustego template i działają lokalnie oraz w GitHub Actions.
+Nowy projekt ma miec jasna instrukcje uzycia startera i lokalne hooki odpalajace guardy przed commitem oraz pushem.
 
 ## Kryteria sukcesu
-- `check:task` odrzuca placeholdery.
-- `check:diff-size` działa dla staged diff i PR diff.
-- `check:godfiles` działa dla staged diff i PR diff.
-- `gate:pr` obejmuje diff-size.
+- README wyjasnia start w nowym repo.
+- `npm run hooks:install` ustawia `.githooks`.
+- `pre-commit` odpala `gate:local`.
+- `pre-push` odpala `gate:pr`.
 
 ## Kontekst dla agenta
-Moduł: workflow guardrails
-Maksymalny zakres plików: scripts, package.json, GitHub Actions, tasks
+Modul: workflow bootstrap
+Maksymalny zakres plikow: README, package.json, .githooks, tasks
 Kontrakty do przeczytania: AGENTS.md
-Pliki zakazane: brak
-Czego nie ruszać: runtime aplikacji, bo to repo jest starterem
+Pliki zakazane: runtime aplikacji
+Czego nie ruszac: guardow runtime poza zakresem
 
 ## Zakres
-Moduł: workflow guardrails
-Pliki: scripts/check-task.js, scripts/check-diff-size.js, scripts/check-godfiles.js, package.json, .github/workflows/pr-gate.yml, tasks/todo.md, tasks/TASK_TEMPLATE.md
+Modul: workflow bootstrap
+Pliki: README.md, package.json, .githooks/pre-commit, .githooks/pre-push, tasks/todo.md
 
 ## Reprodukcja / dowód problemu
-`npm run gate:local` przechodziło na pustym `tasks/todo.md`, bo template zawierał słowa `PASS / FAIL`. `gate:pr` nie uruchamiał `check:diff-size`.
+Audit wskazal brak README i brak hookow jako najprostsze usprawnienia przed uzywaniem startera w nowych projektach.
 
 ## Escalation
 Czy brakuje danych do bezpiecznej zmiany?
 NIE
 
-Jeśli TAK:
-Brakujące dane:
-Czego nie da się potwierdzić:
-Ryzyko kodowania teraz:
-Najmniejszy następny krok:
+Jesli TAK:
+Brakujace dane: brak
+Czego nie da sie potwierdzic: brak
+Ryzyko kodowania teraz: niskie
+Najmniejszy nastepny krok: dodac README i hooki
 
 ## Klasyfikacja
 REQUIRED
 
 Uzasadnienie:
-Bez tego starter przenosi fałszywie zielone guardy do nowych projektów.
+Uzytkownik poprosil o szybkie dodanie rekomendowanych usprawnien.
 
 ## Diagnoza
-Root cause: skrypty walidowały obecność tekstu, nie wypełnienie taska ani realny PR diff.
-Dowód: `check:task` szukał dowolnego `PASS|FAIL`, a `check-diff-size` używał tylko `git diff --cached`.
-Aktualny flow: lokalnie staged diff, w CI PR diff przez `origin/<base>...HEAD`.
+Root cause: starter mial guardy, ale nie mial instrukcji startu ani latwego wlaczenia hookow.
+Dowod: brak README i brak `.githooks`.
+Aktualny flow: `npm run hooks:install` ustawia hooki, a hooki odpalaja istniejace gate'y.
 
 ## Granice
-Moduły dotknięte: workflow guardrails
-Kontrakty dotknięte: npm scripts, PR gate
-Poza zakresem: test runner konkretnej aplikacji
+Moduly dotkniete: workflow bootstrap
+Kontrakty dotkniete: npm scripts, git hooks
+Poza zakresem: dopinanie lint/test/build konkretnej aplikacji
 
 ## Kontrakt
-INPUT: tasks/todo.md, staged diff albo PR diff.
-SUCCESS: guardy przechodzą tylko przy wypełnionym tasku i mieszczącym się diffie.
-ERRORS: placeholder taska, zbyt duży diff, zbyt duży plik bez GOD_FILE_CHECK.
+INPUT: repo z tym workflow.
+SUCCESS: README prowadzi przez start, hooki odpalaja guardy.
+ERRORS: brak executable hookow albo brak konfiguracji `core.hooksPath`.
 STATUSES: PASS / FAIL.
-SIDE EFFECTS: brak poza logami CLI.
-LOGS: komunikaty skryptów npm.
-TESTS: npm run gate:local, npm run gate:pr.
-DONE: guardy działają lokalnie i w CI.
+SIDE EFFECTS: git config `core.hooksPath` po `npm run hooks:install`.
+LOGS: output npm scripts.
+TESTS: `npm run gate:local`, `npm run gate:pr`.
+DONE: zmiany sa w commicie i wypchniete na GitHub.
 
 ## Failure modes
 Timeout: nie dotyczy.
-Null/missing data: brak `tasks/todo.md` kończy FAIL.
-Invalid schema: placeholder lub brak wymaganych sekcji kończy FAIL.
-Duplicate request: nie dotyczy.
+Null/missing data: brak README lub hookow bylby FAIL.
+Invalid schema: nie dotyczy.
+Duplicate request: ponowne `hooks:install` jest idempotentne.
 Concurrent request: nie dotyczy.
-Partial write: nie dotyczy.
+Partial write: commit obejmuje wszystkie pliki.
 Worker crash: nie dotyczy.
 Retry loop: nie dotyczy.
-Provider unavailable: brak base ref w CI powinien zakończyć błędem git, nie silent pass.
+Provider unavailable: push moze FAIL przy problemie GitHub.
 
 ## Guard Scope
 REQUIRED GUARDS:
-- `check:task` musi odrzucać placeholdery.
-- `check:diff-size` musi działać w CI na PR diffie.
-- `gate:pr` musi uruchamiać `check:diff-size`.
+- README z instrukcja.
+- Hooki lokalne.
+- Skrypt instalacji hookow.
 
 NICE_TO_HAVE GUARDS:
-- Projektowe lint/test/build per aplikacja.
+- Projektowe lint/test/build po utworzeniu aplikacji.
 
 OVERBUILD GUARDS:
-- Generator całego nowego projektu.
+- Generator calego projektu.
 
 ParkingLot.md updated:
 NOT_NEEDED
 
 ## Runtime guards
 State machine: nie dotyczy.
-Error classification: CLI fail/pass.
-Idempotency: skrypty read-only.
+Error classification: CLI PASS / FAIL.
+Idempotency: `git config core.hooksPath .githooks` mozna powtarzac.
 Single-flight: nie dotyczy.
 Worker lock: nie dotyczy.
 Circuit breaker: nie dotyczy.
 Backpressure: nie dotyczy.
 UI truth: nie dotyczy.
-Observability: jawne logi npm.
+Observability: output npm i git.
 
 ## Code Structure Guard
 Czy dotykamy pliku >300 LOC?
 NIE
 
-Jeśli TAK:
-Plik:
-LOC:
-Dlaczego zmiana trafia tutaj:
-Czy plik ma wiele odpowiedzialności:
-Minimalny fix:
-Czy potrzebne wydzielenie odpowiedzialności:
-Ryzyko:
+Jesli TAK:
+Plik: brak
+LOC: brak
+Dlaczego zmiana trafia tutaj: brak
+Czy plik ma wiele odpowiedzialnosci: brak
+Minimalny fix: brak
+Czy potrzebne wydzielenie odpowiedzialnosci: brak
+Ryzyko: brak
 
 ## GOD_FILE_CHECK
-Wymagane, jeśli plik >500 LOC.
+Wymagane, jesli plik >500 LOC.
 
-Plik:
-LOC:
-Obecne odpowiedzialności:
-Czy task dokłada nową odpowiedzialność:
-Minimalny fix bez rozbicia:
-Małe wydzielenie odpowiedzialności:
-Ryzyko minimalnego fixu:
-Ryzyko wydzielenia:
-Rekomendacja:
+Plik: brak
+LOC: brak
+Obecne odpowiedzialnosci: brak
+Czy task doklada nowa odpowiedzialnosc: brak
+Minimalny fix bez rozbicia: brak
+Male wydzielenie odpowiedzialnosci: brak
+Ryzyko minimalnego fixu: brak
+Ryzyko wydzielenia: brak
+Rekomendacja: brak
 
 ## Dependency Direction Guard
-Czy zmiana odwraca zależność?
+Czy zmiana odwraca zaleznosc?
 NIE
 
 Czy Business Logic importuje UI/DB/framework?
@@ -139,15 +139,16 @@ Czy adapter przecieka do core?
 NIE
 
 ## Change Isolation
-Ile modułów dotyka zmiana: jeden obszar, workflow guardrails.
-Czy to naturalne: tak, bo skrypty i CI muszą być spójne.
-Czy da się ograniczyć zmianę do jednego kontraktu: tak, npm gates.
+Ile modulow dotyka zmiana: jeden obszar workflow bootstrap.
+Czy to naturalne: tak.
+Czy da sie ograniczyc zmiane do jednego kontraktu: tak, npm scripts i git hooks.
 
 ## Plan
-- [x] Zaostrzyć `check:task`.
-- [x] Dodać PR diff do diff-size i godfile guardów.
-- [x] Spiąć `gate:pr` z diff-size.
-- [x] Oddzielić aktualny task od template.
+- [x] Dodac README.
+- [x] Dodac `.githooks/pre-commit`.
+- [x] Dodac `.githooks/pre-push`.
+- [x] Dodac `hooks:install`.
+- [x] Zaktualizowac aktualny task.
 
 ## Weryfikacja
 Komendy:
@@ -161,18 +162,18 @@ Expected result: PASS
 - [x] brak ERROR w logach
 - [x] zmiana nie wychodzi poza zakres
 - [x] brak refaktoru przy okazji
-- [x] failure modes obsłużone
-- [x] brak silent fallbacków
+- [x] failure modes obsluzone
+- [x] brak silent fallbackow
 - [x] brak empty success
-- [x] UI truth zachowane, jeśli dotyczy
+- [x] UI truth zachowane, jesli dotyczy
 - [x] dependency direction zachowany
-- [x] brak cyklicznych zależności
-- [x] duże pliki nie zostały powiększone bez uzasadnienia
+- [x] brak cyklicznych zaleznosci
+- [x] duze pliki nie zostaly powiekszone bez uzasadnienia
 - [x] implementowano tylko REQUIRED GUARDS
 
 ## Review / Wyniki
-Co zmieniono: zaostrzono walidację taska, PR diff i gate:pr.
-Jak sprawdzono: npm run gate:local, npm run gate:pr.
+Co zmieniono: README, hooki lokalne, `hooks:install`, aktualny task.
+Jak sprawdzono: `npm run gate:local`, `npm run gate:pr`.
 PASS / FAIL: PASS
-Ryzyka: konkretne projekty nadal muszą dodać własny lint/test/build.
-Follow-up: dodać projektowy gate po utworzeniu pierwszej appki.
+Ryzyka: konkretna aplikacja nadal musi dodac wlasne lint/test/build.
+Follow-up: po pierwszym uzyciu startera dopiac projektowe gate'y.
