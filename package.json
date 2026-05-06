@@ -1,0 +1,21 @@
+{
+  "name": "workflow-clean",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "gate:local": "npm run check:task && npm run check:diff-size && npm run check:godfiles",
+    "gate:pr": "npm run check:task && npm run check:godfiles",
+    "gate:main": "npm run check:task && npm run check:godfiles",
+    "check:task": "node scripts/check-task.js",
+    "check:diff-size": "node scripts/check-diff-size.js",
+    "check:godfiles": "node scripts/check-godfiles.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

@@ -1,0 +1,16 @@
+# Lessons
+
+## Data
+...
+
+## Błąd
+...
+
+## Przyczyna
+...
+
+## Reguła zapobiegawcza
+...
+
+## Test / guardrail
+...

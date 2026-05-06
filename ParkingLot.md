@@ -1,0 +1,13 @@
+# Parking Lot
+
+## Pomysł
+...
+
+## Dlaczego nie teraz
+...
+
+## Kiedy wrócić
+...
+
+## Ryzyko
+...
