@@ -1,9 +1,33 @@
-const { execSync } = require("child_process");
+const { execFileSync } = require("child_process");
 
-const output = execSync("git diff --cached --numstat", { encoding: "utf8" }).trim();
+function git(args) {
+  return execFileSync("git", args, { encoding: "utf8" }).trim();
+}
+
+function diffArgs() {
+  if (process.env.GITHUB_BASE_REF) {
+    return ["diff", "--numstat", `origin/${process.env.GITHUB_BASE_REF}...HEAD`];
+  }
+
+  const staged = git(["diff", "--cached", "--name-only"]);
+  if (staged) {
+    return ["diff", "--cached", "--numstat"];
+  }
+
+  return null;
+}
+
+const args = diffArgs();
+
+if (!args) {
+  console.log("check:diff-size PASS - no staged changes");
+  process.exit(0);
+}
+
+const output = git(args);
 
 if (!output) {
-  console.log("check:diff-size PASS - no staged changes");
+  console.log("check:diff-size PASS - no changed files");
   process.exit(0);
 }
 

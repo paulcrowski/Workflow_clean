@@ -36,8 +36,43 @@ if (missing.length) {
   process.exit(1);
 }
 
-if (!/PASS|FAIL|Nie uruchomiono testów/i.test(txt)) {
-  console.error("tasks/todo.md must include verification result: PASS / FAIL / Nie uruchomiono testów");
+const placeholderPatterns = [
+  /^\s*\.\.\.\s*$/m,
+  /MINIMAL_FIX \/ RUNTIME_FIX \/ STRUCTURE_FIX \/ FEATURE \/ AUDIT:/,
+  /REQUIRED \/ NICE_TO_HAVE \/ OVERBUILD:/,
+  /TAK \/ NIE/,
+  /YES \/ NO \/ NOT_NEEDED/,
+  /- \[ \] Krok 1/,
+  /PASS \/ FAIL:\s*$/m
+];
+
+for (const pattern of placeholderPatterns) {
+  if (pattern.test(txt)) {
+    console.error(`tasks/todo.md still contains template placeholder: ${pattern}`);
+    process.exit(1);
+  }
+}
+
+function section(name) {
+  const match = txt.match(new RegExp(`## ${name}\\n([\\s\\S]*?)(?=\\n## |$)`));
+  return match ? match[1].trim() : "";
+}
+
+const mode = section("Tryb pracy");
+if (!/^(MINIMAL_FIX|RUNTIME_FIX|STRUCTURE_FIX|FEATURE|AUDIT)\b/m.test(mode)) {
+  console.error("tasks/todo.md must select one work mode.");
+  process.exit(1);
+}
+
+const classification = section("Klasyfikacja");
+if (!/^(REQUIRED|NICE_TO_HAVE|OVERBUILD)\b/m.test(classification)) {
+  console.error("tasks/todo.md must select one change classification.");
+  process.exit(1);
+}
+
+const review = section("Review / Wyniki");
+if (!/(^|\n)PASS \/ FAIL:\s*(PASS|FAIL|Nie uruchomiono testów)/i.test(review)) {
+  console.error("tasks/todo.md Review / Wyniki must include concrete 'PASS / FAIL: PASS|FAIL|Nie uruchomiono testów'.");
   process.exit(1);
 }
 
