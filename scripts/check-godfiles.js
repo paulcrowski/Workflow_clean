@@ -10,24 +10,14 @@ function changedFilesArgs() {
     return ["diff", "--name-only", `origin/${process.env.GITHUB_BASE_REF}...HEAD`];
   }
 
-  const staged = git(["diff", "--cached", "--name-only"]);
-  if (staged) {
-    return ["diff", "--cached", "--name-only"];
-  }
-
-  return null;
+  return ["diff", "--name-only", "HEAD"];
 }
 
 const args = changedFilesArgs();
-
-if (!args) {
-  console.log("check:godfiles PASS - no staged files");
-  process.exit(0);
-}
-
 const output = git(args);
+const localUntrackedFiles = process.env.GITHUB_BASE_REF ? [] : untrackedFiles();
 
-if (!output) {
+if (!output && !localUntrackedFiles.length) {
   console.log("check:godfiles PASS - no changed files");
   process.exit(0);
 }
@@ -40,6 +30,7 @@ const hasGodFileCheck = /## GOD_FILE_CHECK|GOD_FILE_CHECK/i.test(todo);
 
 const files = output
   .split("\n")
+  .concat(localUntrackedFiles)
   .filter(file => /\.(ts|tsx|js|jsx|py|go|rs|java|cs)$/.test(file))
   .filter(file => fs.existsSync(file));
 
@@ -69,3 +60,17 @@ if (hardFail) {
 }
 
 console.log("check:godfiles PASS");
+
+function untrackedFiles() {
+  const status = git(["status", "--porcelain=v1", "--untracked-files=all"]);
+
+  if (!status) {
+    return [];
+  }
+
+  return status
+    .split("\n")
+    .filter(line => line.startsWith("?? "))
+    .map(line => line.slice(3).trim())
+    .filter(file => fs.existsSync(file) && fs.statSync(file).isFile());
+}

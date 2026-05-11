@@ -14,7 +14,10 @@ Uzasadnienie trybu:
 
 ## Kontekst dla agenta
 Moduł:
+Tryb zmiany: code-change / audit-only / release-build
 Maksymalny zakres plików:
+Dozwolone pliki do zmiany:
+- ...
 Kontrakty do przeczytania:
 Pliki zakazane:
 Czego nie ruszać:

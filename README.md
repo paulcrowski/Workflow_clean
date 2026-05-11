@@ -9,7 +9,7 @@ Starter workflow dla nowych projektow budowanych z agentami AI.
 - `docs/` trzyma guardy dla runtime, struktury kodu, kontraktow i budzetu kontekstu.
 - `tasks/todo.md` jest aktualnym taskiem.
 - `tasks/TASK_TEMPLATE.md` jest czystym formularzem do skopiowania przy nowym tasku.
-- `scripts/` zawiera mechaniczne guardy dla taska, diffu i duzych plikow.
+- `scripts/` zawiera mechaniczne guardy dla taska, scope locka, diffu i duzych plikow.
 
 ## Start w nowym projekcie
 
@@ -22,7 +22,10 @@ npm run hooks:install
 ```
 
 3. Skopiuj `tasks/TASK_TEMPLATE.md` do `tasks/todo.md` i wypelnij realny task.
-4. Dopnij projektowe komendy do `package.json`, gdy aplikacja juz istnieje:
+4. W `tasks/todo.md` ustaw:
+   - `Tryb zmiany: code-change`, `audit-only` albo `release-build`,
+   - `Dozwolone pliki do zmiany` jako twarda allowlista dla aktualnego taska.
+5. Dopnij projektowe komendy do `package.json`, gdy aplikacja juz istnieje:
 
 ```json
 {
@@ -48,6 +51,15 @@ Przed PR / push:
 ```bash
 npm run gate:pr
 ```
+
+`gate:local` i `gate:pr` sprawdzaja:
+
+- task ma wypelniony formularz,
+- zmienione pliki mieszcza sie w scope locku,
+- `audit-only` nie zmienia zadnych plikow,
+- `artifacts/**` wolno zmieniac tylko w trybie `release-build`,
+- lokalny diff wzgledem `HEAD` nie przekracza limitow,
+- duze pliki nie sa powiekszane bez GOD_FILE_CHECK.
 
 ## Zasada
 

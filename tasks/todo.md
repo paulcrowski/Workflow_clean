@@ -4,132 +4,151 @@
 STRUCTURE_FIX
 
 Uzasadnienie trybu:
-Dodanie README i repozytoryjnych hookow porzadkuje sposob uzycia workflow w nowych projektach.
+Task wzmacnia fundament workflow dla nowych aplikacji przez mechaniczne guardy zakresu zmian.
 
 ## Cel / Outcome
-Nowy projekt ma miec jasna instrukcje uzycia startera i lokalne hooki odpalajace guardy przed commitem oraz pushem.
+AI nie może zostawić zmian poza zadeklarowanym zakresem, nie może kodować w tasku audit-only i nie może mieszać artefaktów generowanych ze zmianami logicznymi bez jawnego trybu release/build.
 
 ## Kryteria sukcesu
-- README wyjasnia start w nowym repo.
-- `npm run hooks:install` ustawia `.githooks`.
-- `pre-commit` odpala `gate:local`.
-- `pre-push` odpala `gate:pr`.
+- `gate:local` i `gate:pr` uruchamiają scope lock.
+- `code-change` failuje przy pliku spoza allowlisty.
+- `audit-only` failuje przy dowolnym zmienionym pliku.
+- `artifacts/**` failuje poza `release-build`.
+- Template i dokumenty opisują ten sam mechaniczny flow.
 
 ## Kontekst dla agenta
-Modul: workflow bootstrap
-Maksymalny zakres plikow: README, package.json, .githooks, tasks
-Kontrakty do przeczytania: AGENTS.md
-Pliki zakazane: runtime aplikacji
-Czego nie ruszac: guardow runtime poza zakresem
+Moduł: workflow guards
+Tryb zmiany: code-change
+Maksymalny zakres plików: workflow docs, task template, guard scripts, package scripts
+Dozwolone pliki do zmiany:
+- AGENTS.md
+- AGENT_DEV_POLICY.md
+- ParkingLot.md
+- README.md
+- RELEASE_GATE.md
+- package.json
+- scripts/check-diff-size.js
+- scripts/check-godfiles.js
+- scripts/check-scope.js
+- scripts/check-task.js
+- tasks/TASK_TEMPLATE.md
+- tasks/lessons.md
+- tasks/todo.md
+Kontrakty do przeczytania: AGENTS.md, README.md, RELEASE_GATE.md
+Pliki zakazane: kod aplikacji, artifacts/**
+Czego nie ruszać: framework-specific lint/test/build, logika biznesowa aplikacji, generator projektów
 
 ## Zakres
-Modul: workflow bootstrap
-Pliki: README.md, package.json, .githooks/pre-commit, .githooks/pre-push, tasks/todo.md
+Moduł: workflow guards
+Pliki: package scripts, scope guard, task template, workflow docs
 
 ## Reprodukcja / dowód problemu
-Audit wskazal brak README i brak hookow jako najprostsze usprawnienia przed uzywaniem startera w nowych projektach.
+Obecne `gate:local` sprawdza task, rozmiar diffu i duże pliki, ale nie sprawdza, czy realnie zmienione pliki mieszczą się w zadeklarowanym zakresie. Brak też mechanicznego trybu `audit-only`.
 
 ## Escalation
 Czy brakuje danych do bezpiecznej zmiany?
 NIE
 
-Jesli TAK:
-Brakujace dane: brak
-Czego nie da sie potwierdzic: brak
-Ryzyko kodowania teraz: niskie
-Najmniejszy nastepny krok: dodac README i hooki
+Jeśli TAK:
+Brakujące dane: brak
+Czego nie da się potwierdzić: brak
+Ryzyko kodowania teraz: niskie, bo zmiana dotyczy tylko workflow startera
+Najmniejszy następny krok: dodać scope guard i wpiąć go w istniejące gate'y
 
 ## Klasyfikacja
 REQUIRED
 
 Uzasadnienie:
-Uzytkownik poprosil o szybkie dodanie rekomendowanych usprawnien.
+Bez mechanicznego scope locka workflow nadal zależy od dyscypliny agenta, a nie od gate'a.
 
 ## Diagnoza
-Root cause: starter mial guardy, ale nie mial instrukcji startu ani latwego wlaczenia hookow.
-Dowod: brak README i brak `.githooks`.
-Aktualny flow: `npm run hooks:install` ustawia hooki, a hooki odpalaja istniejace gate'y.
+Root cause: zasada "nie dotykaj plików poza zakresem" była deklaracją, nie automatycznym checkiem.
+Dowód: `package.json` nie ma `check:scope`, a skrypty w `scripts/` nie porównują git diffu z allowlistą taska.
+Aktualny flow: agent wypełnia task, ale gate nie zatrzymuje zmian ubocznych.
 
 ## Granice
-Moduly dotkniete: workflow bootstrap
-Kontrakty dotkniete: npm scripts, git hooks
-Poza zakresem: dopinanie lint/test/build konkretnej aplikacji
+Moduły dotknięte: workflow guard scripts, task template, workflow docs
+Kontrakty dotknięte: `tasks/todo.md` deklaruje tryb zmiany i allowlistę
+Poza zakresem: framework-specific architecture checker, AST import checker, generator tasków
 
 ## Kontrakt
-INPUT: repo z tym workflow.
-SUCCESS: README prowadzi przez start, hooki odpalaja guardy.
-ERRORS: brak executable hookow albo brak konfiguracji `core.hooksPath`.
+INPUT: `tasks/todo.md` z `Tryb zmiany` i `Dozwolone pliki do zmiany`.
+SUCCESS: wszystkie zmienione pliki są w allowliście albo task jest `audit-only` bez zmian.
+ERRORS: brak trybu zmiany, brak allowlisty przy zmianach, plik poza allowlistą, `artifacts/**` poza release-build.
 STATUSES: PASS / FAIL.
-SIDE EFFECTS: git config `core.hooksPath` po `npm run hooks:install`.
-LOGS: output npm scripts.
-TESTS: `npm run gate:local`, `npm run gate:pr`.
-DONE: zmiany sa w commicie i wypchniete na GitHub.
+SIDE EFFECTS: brak poza odczytem git status/diff.
+LOGS: output `npm run check:scope`.
+TESTS: pozytywne i negatywne uruchomienia `scripts/check-scope.js`, `npm run gate:local`.
+DONE: gate blokuje scope creep mechanicznie.
 
 ## Failure modes
 Timeout: nie dotyczy.
-Null/missing data: brak README lub hookow bylby FAIL.
-Invalid schema: nie dotyczy.
-Duplicate request: ponowne `hooks:install` jest idempotentne.
-Concurrent request: nie dotyczy.
-Partial write: commit obejmuje wszystkie pliki.
+Null/missing data: brak trybu zmiany albo allowlisty kończy się FAIL.
+Invalid schema: nieznany tryb zmiany kończy się FAIL.
+Duplicate request: ponowne uruchomienie checka jest idempotentne.
+Concurrent request: git status pokazuje wszystkie lokalne zmiany; pliki spoza scope kończą się FAIL.
+Partial write: gate failuje, jeśli partial write stworzy plik spoza allowlisty.
 Worker crash: nie dotyczy.
 Retry loop: nie dotyczy.
-Provider unavailable: push moze FAIL przy problemie GitHub.
+Provider unavailable: nie dotyczy.
 
 ## Guard Scope
 REQUIRED GUARDS:
-- README z instrukcja.
-- Hooki lokalne.
-- Skrypt instalacji hookow.
+- scope lock po allowliście.
+- audit-only no-diff.
+- blokada `artifacts/**` poza `release-build`.
+- wpięcie scope checka w `gate:local` i `gate:pr`.
+- synchronizacja template i dokumentów.
 
 NICE_TO_HAVE GUARDS:
-- Projektowe lint/test/build po utworzeniu aplikacji.
+- framework-specific import-boundary checker.
+- generator tasków.
 
 OVERBUILD GUARDS:
-- Generator calego projektu.
+- własny subsystem workflow.
 
 ParkingLot.md updated:
-NOT_NEEDED
+YES
 
 ## Runtime guards
 State machine: nie dotyczy.
 Error classification: CLI PASS / FAIL.
-Idempotency: `git config core.hooksPath .githooks` mozna powtarzac.
+Idempotency: check można uruchamiać wielokrotnie.
 Single-flight: nie dotyczy.
 Worker lock: nie dotyczy.
 Circuit breaker: nie dotyczy.
 Backpressure: nie dotyczy.
 UI truth: nie dotyczy.
-Observability: output npm i git.
+Observability: output checka pokazuje zmienione pliki i allowlistę.
 
 ## Code Structure Guard
 Czy dotykamy pliku >300 LOC?
 NIE
 
-Jesli TAK:
+Jeśli TAK:
 Plik: brak
 LOC: brak
 Dlaczego zmiana trafia tutaj: brak
-Czy plik ma wiele odpowiedzialnosci: brak
+Czy plik ma wiele odpowiedzialności: brak
 Minimalny fix: brak
-Czy potrzebne wydzielenie odpowiedzialnosci: brak
+Czy potrzebne wydzielenie odpowiedzialności: brak
 Ryzyko: brak
 
 ## GOD_FILE_CHECK
-Wymagane, jesli plik >500 LOC.
+Wymagane, jeśli plik >500 LOC.
 
 Plik: brak
 LOC: brak
-Obecne odpowiedzialnosci: brak
-Czy task doklada nowa odpowiedzialnosc: brak
+Obecne odpowiedzialności: brak
+Czy task dokłada nową odpowiedzialność: brak
 Minimalny fix bez rozbicia: brak
-Male wydzielenie odpowiedzialnosci: brak
+Małe wydzielenie odpowiedzialności: brak
 Ryzyko minimalnego fixu: brak
 Ryzyko wydzielenia: brak
 Rekomendacja: brak
 
 ## Dependency Direction Guard
-Czy zmiana odwraca zaleznosc?
+Czy zmiana odwraca zależność?
 NIE
 
 Czy Business Logic importuje UI/DB/framework?
@@ -139,41 +158,43 @@ Czy adapter przecieka do core?
 NIE
 
 ## Change Isolation
-Ile modulow dotyka zmiana: jeden obszar workflow bootstrap.
+Ile modułów dotyka zmiana: jeden obszar workflow guards.
 Czy to naturalne: tak.
-Czy da sie ograniczyc zmiane do jednego kontraktu: tak, npm scripts i git hooks.
+Czy da się ograniczyć zmianę do jednego kontraktu: tak, `tasks/todo.md` jako scope contract.
 
 ## Plan
-- [x] Dodac README.
-- [x] Dodac `.githooks/pre-commit`.
-- [x] Dodac `.githooks/pre-push`.
-- [x] Dodac `hooks:install`.
-- [x] Zaktualizowac aktualny task.
+- [x] Dodać scope-lock guard script.
+- [x] Wpiąć guard w npm gates.
+- [x] Zaktualizować template i docs.
+- [x] Uruchomić pozytywne i negatywne checki.
 
 ## Weryfikacja
 Komendy:
+`npm run check:scope`
+`CHECK_SCOPE_CHANGED_FILES="README.md\nsrc/unexpected.ts" node scripts/check-scope.js`
+`CHECK_SCOPE_CHANGED_FILES="README.md" CHECK_SCOPE_TASK_FILE=/tmp/audit-task.md node scripts/check-scope.js`
+`CHECK_SCOPE_CHANGED_FILES="artifacts/report.html" node scripts/check-scope.js`
 `npm run gate:local`
-`npm run gate:pr`
-Expected result: PASS
+Expected result: pozytywne checki PASS, negatywne checki FAIL.
 
 ## Definition of Done
 - [x] test PASS
-- [x] build PASS
-- [x] brak ERROR w logach
+- [x] build NOT_NEEDED, starter nie ma aplikacji do zbudowania
+- [ ] brak ERROR w logach
 - [x] zmiana nie wychodzi poza zakres
 - [x] brak refaktoru przy okazji
-- [x] failure modes obsluzone
-- [x] brak silent fallbackow
+- [x] failure modes obsłużone
+- [x] brak silent fallbacków
 - [x] brak empty success
-- [x] UI truth zachowane, jesli dotyczy
+- [x] UI truth zachowane, jeśli dotyczy
 - [x] dependency direction zachowany
-- [x] brak cyklicznych zaleznosci
-- [x] duze pliki nie zostaly powiekszone bez uzasadnienia
+- [x] brak cyklicznych zależności
+- [x] duże pliki nie zostały powiększone bez uzasadnienia
 - [x] implementowano tylko REQUIRED GUARDS
 
 ## Review / Wyniki
-Co zmieniono: README, hooki lokalne, `hooks:install`, aktualny task.
-Jak sprawdzono: `npm run gate:local`, `npm run gate:pr`.
+Co zmieniono: scope-lock guard, npm gate wiring, template i docs.
+Jak sprawdzono: `npm run check:scope`, negatywne testy dla scope creep / artifacts / audit-only, pozytywny test `release-build` dla `artifacts/**`, `npm run gate:local`, `npm run gate:pr`.
 PASS / FAIL: PASS
-Ryzyka: konkretna aplikacja nadal musi dodac wlasne lint/test/build.
-Follow-up: po pierwszym uzyciu startera dopiac projektowe gate'y.
+Ryzyka: konkretny projekt nadal musi dodać własne lint/typecheck/test/build.
+Follow-up: framework-specific import-boundary checker dopiero po wybraniu stacka aplikacji.

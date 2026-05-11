@@ -82,6 +82,19 @@ Resztę zapisz do ParkingLot.md.
 13. Jeśli task dotyka dużego pliku, core, runtime albo wielu modułów, stosuj docs/CODE_STRUCTURE_GUARDS.md.
 14. Jeśli task jest długi albo kosztowny tokenowo, stosuj docs/CONTEXT_BUDGET_GUARD.md.
 
+## Scope lock
+
+Każdy task musi wskazać:
+- Tryb zmiany: code-change / audit-only / release-build.
+- Dozwolone pliki do zmiany.
+
+Zasady:
+- code-change: wolno dotknąć tylko plików z allowlisty.
+- audit-only: nie wolno zmienić żadnego pliku.
+- release-build: artefakty generowane są dozwolone tylko, jeśli są jawnie wpisane w allowlistę.
+- artifacts/** jest zablokowane poza release-build.
+- unexpected change = STOP i popraw scope albo cofnij własną zmianę.
+
 ## Modularność
 
 Repo ma być AI-readable.

@@ -8,10 +8,11 @@
   },
   "scripts": {
     "hooks:install": "git config core.hooksPath .githooks",
-    "gate:local": "npm run check:task && npm run check:diff-size && npm run check:godfiles",
-    "gate:pr": "npm run check:task && npm run check:diff-size && npm run check:godfiles",
+    "gate:local": "npm run check:task && npm run check:scope && npm run check:diff-size && npm run check:godfiles",
+    "gate:pr": "npm run check:task && npm run check:scope && npm run check:diff-size && npm run check:godfiles",
     "gate:main": "npm run gate:pr",
     "check:task": "node scripts/check-task.js",
+    "check:scope": "node scripts/check-scope.js",
     "check:diff-size": "node scripts/check-diff-size.js",
     "check:godfiles": "node scripts/check-godfiles.js"
   },

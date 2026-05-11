@@ -39,9 +39,11 @@ if (missing.length) {
 const placeholderPatterns = [
   /^\s*\.\.\.\s*$/m,
   /MINIMAL_FIX \/ RUNTIME_FIX \/ STRUCTURE_FIX \/ FEATURE \/ AUDIT:/,
+  /Tryb zmiany:\s*code-change \/ audit-only \/ release-build/,
   /REQUIRED \/ NICE_TO_HAVE \/ OVERBUILD:/,
   /TAK \/ NIE/,
   /YES \/ NO \/ NOT_NEEDED/,
+  /^\s*-\s+\.\.\.\s*$/m,
   /- \[ \] Krok 1/,
   /PASS \/ FAIL:\s*$/m
 ];

@@ -22,6 +22,7 @@
 18. Nie wdrażaj wszystkich guardów naraz. Implementuj tylko REQUIRED.
 19. Jeśli brakuje danych do bezpiecznej zmiany, nie koduj. Użyj ESCALATION.
 20. Repo trzyma procedurę, prompt trzyma outcome.
+21. Scope lock jest mechaniczny: task wskazuje tryb zmiany i allowlistę plików.
 
 ## Prompting rule for GPT-5.5 / Codex
 
@@ -74,6 +75,12 @@ Dotykaj tylko tego, co konieczne.
 Nie poprawiaj sąsiedniego kodu przy okazji.
 Nie zmieniaj stylu bez potrzeby.
 Każda zmieniona linia ma mieć związek z taskiem.
+
+Przed zmianą ustaw w `tasks/todo.md`:
+- `Tryb zmiany: code-change`, `audit-only` albo `release-build`.
+- `Dozwolone pliki do zmiany` jako twardą allowlistę.
+
+Jeśli git pokazuje plik spoza allowlisty, zatrzymaj pracę i rozstrzygnij scope przed kontynuacją.
 
 ## AI-ready codebase
 

@@ -1,4 +1,5 @@
 const { execFileSync } = require("child_process");
+const fs = require("fs");
 
 function git(args) {
   return execFileSync("git", args, { encoding: "utf8" }).trim();
@@ -9,24 +10,15 @@ function diffArgs() {
     return ["diff", "--numstat", `origin/${process.env.GITHUB_BASE_REF}...HEAD`];
   }
 
-  const staged = git(["diff", "--cached", "--name-only"]);
-  if (staged) {
-    return ["diff", "--cached", "--numstat"];
-  }
-
-  return null;
+  return ["diff", "--numstat", "HEAD"];
 }
 
 const args = diffArgs();
 
-if (!args) {
-  console.log("check:diff-size PASS - no staged changes");
-  process.exit(0);
-}
-
 const output = git(args);
+const localUntrackedFiles = process.env.GITHUB_BASE_REF ? [] : untrackedFiles();
 
-if (!output) {
+if (!output && !localUntrackedFiles.length) {
   console.log("check:diff-size PASS - no changed files");
   process.exit(0);
 }
@@ -76,10 +68,28 @@ const countedFiles = [];
 const ignoredFiles = [];
 
 for (const line of output.split("\n")) {
+  if (!line) {
+    continue;
+  }
+
   const [added, removed, file] = line.split(/\s+/);
   const a = Number(added) || 0;
   const r = Number(removed) || 0;
   const changed = a + r;
+
+  total += changed;
+
+  if (isIgnoredLargeFile(file)) {
+    ignoredFiles.push(file);
+    continue;
+  }
+
+  countedTotal += changed;
+  countedFiles.push(file);
+}
+
+for (const file of localUntrackedFiles) {
+  const changed = countFileLines(file);
 
   total += changed;
 
@@ -109,4 +119,26 @@ console.log(`check:diff-size PASS - ${countedFiles.length} counted files, ${coun
 
 if (ignoredFiles.length) {
   console.log(`Ignored generated/lock files: ${ignoredFiles.join(", ")}`);
+}
+
+function untrackedFiles() {
+  const status = git(["status", "--porcelain=v1", "--untracked-files=all"]);
+
+  if (!status) {
+    return [];
+  }
+
+  return status
+    .split("\n")
+    .filter(line => line.startsWith("?? "))
+    .map(line => line.slice(3).trim())
+    .filter(file => fs.existsSync(file) && fs.statSync(file).isFile());
+}
+
+function countFileLines(file) {
+  try {
+    return fs.readFileSync(file, "utf8").split("\n").length;
+  } catch {
+    return 0;
+  }
 }
