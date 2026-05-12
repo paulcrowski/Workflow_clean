@@ -1,5 +1,9 @@
 # Current Task
 
+Task ID: YYYY-MM-DD-short-slug
+Task Date: YYYY-MM-DD
+Task Status: ACTIVE
+
 ## Tryb pracy
 MINIMAL_FIX / RUNTIME_FIX / STRUCTURE_FIX / FEATURE / AUDIT:
 

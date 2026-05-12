@@ -29,3 +29,33 @@ Limity rozmiaru diffu muszą wynikać z trybu pracy, a nie z jednego globalnego 
 
 ## Test / guardrail
 `scripts/check-diff-size.js` egzekwuje `MINIMAL_FIX` jako 3 liczone pliki / 50 liczonych linii i ma env-based test seam dla numstat/task file.
+
+## Data
+2026-05-12
+
+## Błąd
+Workflow mógł użyć starego `tasks/todo.md` jako przepustki, jeśli formularz i allowlista nadal pasowały do diffu.
+
+## Przyczyna
+Guardy sprawdzały strukturę taska, scope i rozmiar diffu, ale nie wymagały aktywnego statusu, identyfikatora ani świeżej daty taska.
+
+## Reguła zapobiegawcza
+Bieżący task musi mieć `Task ID`, `Task Date` i `Task Status: ACTIVE`; stary albo zamknięty task ma failować przed sprawdzeniem scope.
+
+## Test / guardrail
+`scripts/check-task-freshness.js` jest wpięty w `gate:local` i `gate:pr`; negatywne testy obejmują `DONE` oraz task starszy niż limit.
+
+## Data
+2026-05-12
+
+## Błąd
+Starter mógł zostać użyty do realnej aplikacji bez faktycznych `lint/typecheck/test/build` oraz bez mechanicznego sprawdzania granic importów.
+
+## Przyczyna
+Dokumenty mówiły o dopięciu testów i modularności, ale `gate:local` / `gate:pr` nie miały guardów dla project scripts ani import boundaries.
+
+## Reguła zapobiegawcza
+Pusty starter nie udaje testów, ale po wykryciu kodu aplikacji musi wymagać realnych project gates; import boundaries muszą być konfigurowane per stack w repo.
+
+## Test / guardrail
+`scripts/check-project-gates.js` wymaga `lint/typecheck/test/build` po wykryciu app code; `scripts/check-import-boundaries.js` blokuje zakazane lokalne importy według `workflow/import-boundaries.json`.

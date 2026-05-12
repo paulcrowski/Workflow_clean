@@ -63,6 +63,7 @@ const workflowPatterns = [
   /^TESTING\.md$/,
   /^ParkingLot\.md$/,
   /^docs\//,
+  /^workflow\//,
   /^tasks\//,
   /^\.github\//,
   /^\.githooks\//

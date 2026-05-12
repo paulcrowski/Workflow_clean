@@ -28,7 +28,7 @@ function changedFiles() {
     return output ? output.split("\n").map(normalize).filter(Boolean) : [];
   }
 
-  const status = git(["status", "--porcelain=v1"], false);
+  const status = git(["status", "--porcelain=v1", "--untracked-files=all"], false);
   if (!status.trim()) return [];
 
   return status.replace(/\n$/, "").split("\n").flatMap(line => {

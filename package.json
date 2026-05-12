@@ -8,13 +8,16 @@
   },
   "scripts": {
     "hooks:install": "git config core.hooksPath .githooks",
-    "gate:local": "npm run check:task && npm run check:scope && npm run check:diff-size && npm run check:godfiles",
-    "gate:pr": "npm run check:task && npm run check:scope && npm run check:diff-size && npm run check:godfiles",
+    "gate:local": "npm run check:task && npm run check:task-freshness && npm run check:scope && npm run check:diff-size && npm run check:godfiles && npm run check:project-gates && npm run check:import-boundaries",
+    "gate:pr": "npm run check:task && npm run check:task-freshness && npm run check:scope && npm run check:diff-size && npm run check:godfiles && npm run check:project-gates && npm run check:import-boundaries",
     "gate:main": "npm run gate:pr",
     "check:task": "node scripts/check-task.js",
+    "check:task-freshness": "node scripts/check-task-freshness.js",
     "check:scope": "node scripts/check-scope.js",
     "check:diff-size": "node scripts/check-diff-size.js",
-    "check:godfiles": "node scripts/check-godfiles.js"
+    "check:godfiles": "node scripts/check-godfiles.js",
+    "check:project-gates": "node scripts/check-project-gates.js",
+    "check:import-boundaries": "node scripts/check-import-boundaries.js"
   },
   "keywords": [],
   "author": "",
