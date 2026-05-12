@@ -10,6 +10,20 @@ Kryteria dopuszczenia zmiany do głównej gałęzi (main).
 5. Brak błędów w logach
 6. Review zakończone
 
+## Limity diffu
+
+`check:diff-size` używa trybu pracy z `tasks/todo.md`:
+
+| Tryb pracy | Limit liczonych plików | Limit liczonych linii |
+| --- | ---: | ---: |
+| `MINIMAL_FIX` | 3 | 50 |
+| `RUNTIME_FIX` | 12 | 250 |
+| `STRUCTURE_FIX` | 12 | 250 |
+| `FEATURE` | 12 | 250 |
+| `AUDIT` | 0 | 0 |
+
+Jeśli task przekracza limit, trzeba przerwać i zrobić re-plan albo rozbić zmianę na mniejsze commity.
+
 ## Scope lock
 
 Każdy task musi wskazać `Tryb zmiany`:

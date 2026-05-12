@@ -58,8 +58,22 @@ npm run gate:pr
 - zmienione pliki mieszcza sie w scope locku,
 - `audit-only` nie zmienia zadnych plikow,
 - `artifacts/**` wolno zmieniac tylko w trybie `release-build`,
-- lokalny diff wzgledem `HEAD` nie przekracza limitow,
+- lokalny diff wzgledem `HEAD` nie przekracza limitow dla wybranego trybu pracy,
 - duze pliki nie sa powiekszane bez GOD_FILE_CHECK.
+
+## Limity diffu
+
+`scripts/check-diff-size.js` czyta `## Tryb pracy` z `tasks/todo.md`.
+
+| Tryb pracy | Liczone pliki | Liczone linie |
+| --- | ---: | ---: |
+| `MINIMAL_FIX` | 3 | 50 |
+| `RUNTIME_FIX` | 12 | 250 |
+| `STRUCTURE_FIX` | 12 | 250 |
+| `FEATURE` | 12 | 250 |
+| `AUDIT` | 0 | 0 |
+
+Pliki workflow, dokumenty, lockfile i generowane build artefakty sa ignorowane przez licznik rozmiaru diffu, ale nadal musza przejsc scope lock z `tasks/todo.md`.
 
 ## Zasada
 

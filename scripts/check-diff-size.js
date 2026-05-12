@@ -14,9 +14,21 @@ function diffArgs() {
 }
 
 const args = diffArgs();
+const taskFile = process.env.CHECK_DIFF_TASK_FILE || "tasks/todo.md";
+const modeLimits = {
+  MINIMAL_FIX: { files: 3, lines: 50 },
+  RUNTIME_FIX: { files: 12, lines: 250 },
+  STRUCTURE_FIX: { files: 12, lines: 250 },
+  FEATURE: { files: 12, lines: 250 },
+  AUDIT: { files: 0, lines: 0 }
+};
 
-const output = git(args);
-const localUntrackedFiles = process.env.GITHUB_BASE_REF ? [] : untrackedFiles();
+const output = process.env.CHECK_DIFF_NUMSTAT !== undefined
+  ? process.env.CHECK_DIFF_NUMSTAT.trim()
+  : git(args);
+const localUntrackedFiles = process.env.GITHUB_BASE_REF || process.env.CHECK_DIFF_NUMSTAT !== undefined
+  ? []
+  : untrackedFiles();
 
 if (!output && !localUntrackedFiles.length) {
   console.log("check:diff-size PASS - no changed files");
@@ -66,13 +78,16 @@ let total = 0;
 let countedTotal = 0;
 const countedFiles = [];
 const ignoredFiles = [];
+const mode = workMode();
+const limit = modeLimits[mode];
 
 for (const line of output.split("\n")) {
   if (!line) {
     continue;
   }
 
-  const [added, removed, file] = line.split(/\s+/);
+  const [added, removed, ...fileParts] = line.split("\t");
+  const file = fileParts.join("\t");
   const a = Number(added) || 0;
   const r = Number(removed) || 0;
   const changed = a + r;
@@ -85,7 +100,9 @@ for (const line of output.split("\n")) {
   }
 
   countedTotal += changed;
-  countedFiles.push(file);
+  if (!countedFiles.includes(file)) {
+    countedFiles.push(file);
+  }
 }
 
 for (const file of localUntrackedFiles) {
@@ -99,23 +116,25 @@ for (const file of localUntrackedFiles) {
   }
 
   countedTotal += changed;
-  countedFiles.push(file);
+  if (!countedFiles.includes(file)) {
+    countedFiles.push(file);
+  }
 }
 
-if (countedFiles.length > 12) {
-  console.error(`Too many files changed: ${countedFiles.length}. Limit: 12. Re-plan required.`);
+if (countedFiles.length > limit.files) {
+  console.error(`Too many files changed for ${mode}: ${countedFiles.length}. Limit: ${limit.files}. Re-plan required.`);
   console.error(`Ignored generated/lock files: ${ignoredFiles.join(", ") || "none"}`);
   process.exit(1);
 }
 
-if (countedTotal > 250) {
-  console.error(`Diff too large: ${countedTotal} counted lines. Limit: 250. Split into smaller AI-safe tasks.`);
+if (countedTotal > limit.lines) {
+  console.error(`Diff too large for ${mode}: ${countedTotal} counted lines. Limit: ${limit.lines}. Split into smaller AI-safe tasks.`);
   console.error(`Total including generated/lock files: ${total}`);
   console.error(`Ignored generated/lock files: ${ignoredFiles.join(", ") || "none"}`);
   process.exit(1);
 }
 
-console.log(`check:diff-size PASS - ${countedFiles.length} counted files, ${countedTotal} counted lines`);
+console.log(`check:diff-size PASS - ${mode}: ${countedFiles.length}/${limit.files} counted files, ${countedTotal}/${limit.lines} counted lines`);
 
 if (ignoredFiles.length) {
   console.log(`Ignored generated/lock files: ${ignoredFiles.join(", ")}`);
@@ -141,4 +160,21 @@ function countFileLines(file) {
   } catch {
     return 0;
   }
+}
+
+function workMode() {
+  if (!fs.existsSync(taskFile)) {
+    console.error(`Missing ${taskFile}`);
+    process.exit(1);
+  }
+
+  const txt = fs.readFileSync(taskFile, "utf8");
+  const match = txt.match(/## Tryb pracy\s*\n\s*(MINIMAL_FIX|RUNTIME_FIX|STRUCTURE_FIX|FEATURE|AUDIT)\b/);
+
+  if (!match) {
+    console.error(`${taskFile} must select one work mode before checking diff size.`);
+    process.exit(1);
+  }
+
+  return match[1];
 }

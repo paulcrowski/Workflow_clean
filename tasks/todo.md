@@ -4,46 +4,38 @@
 STRUCTURE_FIX
 
 Uzasadnienie trybu:
-Task wzmacnia fundament workflow dla nowych aplikacji przez mechaniczne guardy zakresu zmian.
+Wzmacniam mechaniczny guard workflow, bo obecny limit dla MINIMAL_FIX jest opisany w polityce, ale nieegzekwowany w skrypcie.
 
 ## Cel / Outcome
-AI nie może zostawić zmian poza zadeklarowanym zakresem, nie może kodować w tasku audit-only i nie może mieszać artefaktów generowanych ze zmianami logicznymi bez jawnego trybu release/build.
+Mały fix nie może przejść jako duży diff tylko dlatego, że globalny limit `check:diff-size` jest luźniejszy.
 
 ## Kryteria sukcesu
-- `gate:local` i `gate:pr` uruchamiają scope lock.
-- `code-change` failuje przy pliku spoza allowlisty.
-- `audit-only` failuje przy dowolnym zmienionym pliku.
-- `artifacts/**` failuje poza `release-build`.
-- Template i dokumenty opisują ten sam mechaniczny flow.
+- `MINIMAL_FIX` failuje powyżej 3 liczonych plików.
+- `MINIMAL_FIX` failuje powyżej 50 liczonych linii.
+- Obecny `STRUCTURE_FIX` nadal przechodzi w `gate:local`.
+- Test seam jest zgodny z istniejącym stylem env-based guard tests.
+- README i release gate opisują limity diffu per tryb pracy.
 
 ## Kontekst dla agenta
 Moduł: workflow guards
 Tryb zmiany: code-change
-Maksymalny zakres plików: workflow docs, task template, guard scripts, package scripts
+Maksymalny zakres plików: guard script plus task evidence
 Dozwolone pliki do zmiany:
-- AGENTS.md
-- AGENT_DEV_POLICY.md
-- ParkingLot.md
 - README.md
 - RELEASE_GATE.md
-- package.json
 - scripts/check-diff-size.js
-- scripts/check-godfiles.js
-- scripts/check-scope.js
-- scripts/check-task.js
-- tasks/TASK_TEMPLATE.md
-- tasks/lessons.md
 - tasks/todo.md
-Kontrakty do przeczytania: AGENTS.md, README.md, RELEASE_GATE.md
+- tasks/lessons.md
+Kontrakty do przeczytania: AGENTS.md, AGENT_DEV_POLICY.md, docs/CONTEXT_BUDGET_GUARD.md
 Pliki zakazane: kod aplikacji, artifacts/**
-Czego nie ruszać: framework-specific lint/test/build, logika biznesowa aplikacji, generator projektów
+Czego nie ruszać: scope guard, godfile guard, task checker, dokumenty niezwiązane z diff-size limits
 
 ## Zakres
 Moduł: workflow guards
-Pliki: package scripts, scope guard, task template, workflow docs
+Pliki: `scripts/check-diff-size.js`, `README.md`, `RELEASE_GATE.md`, `tasks/todo.md`, `tasks/lessons.md`
 
 ## Reprodukcja / dowód problemu
-Obecne `gate:local` sprawdza task, rozmiar diffu i duże pliki, ale nie sprawdza, czy realnie zmienione pliki mieszczą się w zadeklarowanym zakresie. Brak też mechanicznego trybu `audit-only`.
+`AGENTS.md` deklaruje `MINIMAL_FIX - mały bugfix, max 3 pliki, max 50 LOC`, ale `scripts/check-diff-size.js` używa jednego limitu: 12 liczonych plików i 250 liczonych linii.
 
 ## Escalation
 Czy brakuje danych do bezpiecznej zmiany?
@@ -52,63 +44,61 @@ NIE
 Jeśli TAK:
 Brakujące dane: brak
 Czego nie da się potwierdzić: brak
-Ryzyko kodowania teraz: niskie, bo zmiana dotyczy tylko workflow startera
-Najmniejszy następny krok: dodać scope guard i wpiąć go w istniejące gate'y
+Ryzyko kodowania teraz: niskie, zmiana dotyczy jednego guarda i zachowuje obecne limity dla większych trybów
+Najmniejszy następny krok: dodać limity zależne od trybu pracy i negatywne testy przez env input
 
 ## Klasyfikacja
 REQUIRED
 
 Uzasadnienie:
-Bez mechanicznego scope locka workflow nadal zależy od dyscypliny agenta, a nie od gate'a.
+Bez egzekwowania limitu MINIMAL_FIX workflow pozwala na dokładanie niepotrzebnego kodu mimo poprawnie wypełnionego taska.
 
 ## Diagnoza
-Root cause: zasada "nie dotykaj plików poza zakresem" była deklaracją, nie automatycznym checkiem.
-Dowód: `package.json` nie ma `check:scope`, a skrypty w `scripts/` nie porównują git diffu z allowlistą taska.
-Aktualny flow: agent wypełnia task, ale gate nie zatrzymuje zmian ubocznych.
+Root cause: limit małego fixa żył tylko w instrukcji, nie w bramie.
+Dowód: `check-diff-size.js` miał stałe warunki `countedFiles.length > 12` i `countedTotal > 250`.
+Aktualny flow: agent może oznaczyć task jako MINIMAL_FIX, a gate nadal przepuści do 12 plików i 250 linii.
 
 ## Granice
-Moduły dotknięte: workflow guard scripts, task template, workflow docs
-Kontrakty dotknięte: `tasks/todo.md` deklaruje tryb zmiany i allowlistę
-Poza zakresem: framework-specific architecture checker, AST import checker, generator tasków
+Moduły dotknięte: workflow guard scripts
+Kontrakty dotknięte: `tasks/todo.md` jako źródło trybu pracy dla diff-size guard
+Poza zakresem: nowe guardy instrukcji, import-boundary checker, test-quality checker, generator tasków
 
 ## Kontrakt
-INPUT: `tasks/todo.md` z `Tryb zmiany` i `Dozwolone pliki do zmiany`.
-SUCCESS: wszystkie zmienione pliki są w allowliście albo task jest `audit-only` bez zmian.
-ERRORS: brak trybu zmiany, brak allowlisty przy zmianach, plik poza allowlistą, `artifacts/**` poza release-build.
+INPUT: `tasks/todo.md` z wybranym trybem pracy oraz git diff numstat.
+SUCCESS: diff mieści się w limitach dla trybu pracy.
+ERRORS: brak trybu pracy, przekroczona liczba plików, przekroczona liczba linii.
 STATUSES: PASS / FAIL.
-SIDE EFFECTS: brak poza odczytem git status/diff.
-LOGS: output `npm run check:scope`.
-TESTS: pozytywne i negatywne uruchomienia `scripts/check-scope.js`, `npm run gate:local`.
-DONE: gate blokuje scope creep mechanicznie.
+SIDE EFFECTS: brak poza odczytem git diff i task file.
+LOGS: output `npm run check:diff-size`.
+TESTS: env-based pozytywne i negatywne uruchomienia skryptu.
+DONE: `MINIMAL_FIX` ma realny limit 3 pliki / 50 LOC.
 
 ## Failure modes
 Timeout: nie dotyczy.
-Null/missing data: brak trybu zmiany albo allowlisty kończy się FAIL.
-Invalid schema: nieznany tryb zmiany kończy się FAIL.
-Duplicate request: ponowne uruchomienie checka jest idempotentne.
-Concurrent request: git status pokazuje wszystkie lokalne zmiany; pliki spoza scope kończą się FAIL.
-Partial write: gate failuje, jeśli partial write stworzy plik spoza allowlisty.
+Null/missing data: brak task file albo trybu pracy kończy się FAIL.
+Invalid schema: nieznany tryb pracy kończy się FAIL.
+Duplicate request: check jest idempotentny.
+Concurrent request: git diff obejmuje bieżący stan roboczy.
+Partial write: przekroczony limit kończy się FAIL.
 Worker crash: nie dotyczy.
 Retry loop: nie dotyczy.
 Provider unavailable: nie dotyczy.
 
 ## Guard Scope
 REQUIRED GUARDS:
-- scope lock po allowliście.
-- audit-only no-diff.
-- blokada `artifacts/**` poza `release-build`.
-- wpięcie scope checka w `gate:local` i `gate:pr`.
-- synchronizacja template i dokumentów.
+- limity diffu zależne od trybu pracy.
+- twardy limit `MINIMAL_FIX`: 3 pliki / 50 LOC.
+- test seam dla symulowanych numstat/task file.
 
 NICE_TO_HAVE GUARDS:
-- framework-specific import-boundary checker.
-- generator tasków.
+- osobny guard długości AGENTS.md/CLAUDE.md.
+- checker jakości testów po wybraniu stacka.
 
 OVERBUILD GUARDS:
-- własny subsystem workflow.
+- pełny subsystem planowania z własnym parserem zadań.
 
 ParkingLot.md updated:
-YES
+NOT_NEEDED
 
 ## Runtime guards
 State machine: nie dotyczy.
@@ -119,7 +109,7 @@ Worker lock: nie dotyczy.
 Circuit breaker: nie dotyczy.
 Backpressure: nie dotyczy.
 UI truth: nie dotyczy.
-Observability: output checka pokazuje zmienione pliki i allowlistę.
+Observability: output pokazuje tryb pracy i wykorzystany limit.
 
 ## Code Structure Guard
 Czy dotykamy pliku >300 LOC?
@@ -158,29 +148,29 @@ Czy adapter przecieka do core?
 NIE
 
 ## Change Isolation
-Ile modułów dotyka zmiana: jeden obszar workflow guards.
+Ile modułów dotyka zmiana: jeden guard script.
 Czy to naturalne: tak.
-Czy da się ograniczyć zmianę do jednego kontraktu: tak, `tasks/todo.md` jako scope contract.
+Czy da się ograniczyć zmianę do jednego kontraktu: tak, `tasks/todo.md` jako źródło trybu.
 
 ## Plan
-- [x] Dodać scope-lock guard script.
-- [x] Wpiąć guard w npm gates.
-- [x] Zaktualizować template i docs.
-- [x] Uruchomić pozytywne i negatywne checki.
+- [x] Zidentyfikować lukę między polityką MINIMAL_FIX i skryptem.
+- [x] Dodać limity zależne od trybu pracy.
+- [x] Uruchomić negatywne testy dla MINIMAL_FIX.
+- [x] Uruchomić `npm run gate:local`.
+- [x] Uzupełnić dokumentację limitów trybu pracy.
 
 ## Weryfikacja
 Komendy:
-`npm run check:scope`
-`CHECK_SCOPE_CHANGED_FILES="README.md\nsrc/unexpected.ts" node scripts/check-scope.js`
-`CHECK_SCOPE_CHANGED_FILES="README.md" CHECK_SCOPE_TASK_FILE=/tmp/audit-task.md node scripts/check-scope.js`
-`CHECK_SCOPE_CHANGED_FILES="artifacts/report.html" node scripts/check-scope.js`
+`CHECK_DIFF_TASK_FILE=/tmp/minimal-task.md CHECK_DIFF_NUMSTAT=$'10\t41\tsrc/a.ts' node scripts/check-diff-size.js`
+`CHECK_DIFF_TASK_FILE=/tmp/minimal-task.md CHECK_DIFF_NUMSTAT=$'10\t40\tsrc/a.ts' node scripts/check-diff-size.js`
+`CHECK_DIFF_TASK_FILE=/tmp/minimal-task.md CHECK_DIFF_NUMSTAT=$'1\t1\tsrc/a.ts\n1\t1\tsrc/b.ts\n1\t1\tsrc/c.ts\n1\t1\tsrc/d.ts' node scripts/check-diff-size.js`
 `npm run gate:local`
-Expected result: pozytywne checki PASS, negatywne checki FAIL.
+Expected result: przekroczenia MINIMAL_FIX failują, limit 50 linii przechodzi, gate lokalny przechodzi.
 
 ## Definition of Done
 - [x] test PASS
 - [x] build NOT_NEEDED, starter nie ma aplikacji do zbudowania
-- [ ] brak ERROR w logach
+- [x] brak ERROR w logach
 - [x] zmiana nie wychodzi poza zakres
 - [x] brak refaktoru przy okazji
 - [x] failure modes obsłużone
@@ -193,8 +183,8 @@ Expected result: pozytywne checki PASS, negatywne checki FAIL.
 - [x] implementowano tylko REQUIRED GUARDS
 
 ## Review / Wyniki
-Co zmieniono: scope-lock guard, npm gate wiring, template i docs.
-Jak sprawdzono: `npm run check:scope`, negatywne testy dla scope creep / artifacts / audit-only, pozytywny test `release-build` dla `artifacts/**`, `npm run gate:local`, `npm run gate:pr`.
+Co zmieniono: `scripts/check-diff-size.js` czyta tryb pracy i egzekwuje limity zależne od trybu; `MINIMAL_FIX` ma twarde 3 pliki / 50 LOC; README i release gate opisują tabelę limitów.
+Jak sprawdzono: env-based testy negatywne dla 51 LOC i 4 plików w `MINIMAL_FIX`, pozytywny test 50 LOC, `npm run gate:local`.
 PASS / FAIL: PASS
-Ryzyka: konkretny projekt nadal musi dodać własne lint/typecheck/test/build.
-Follow-up: framework-specific import-boundary checker dopiero po wybraniu stacka aplikacji.
+Ryzyka: workflow docs/tasks są nadal ignorowane przez licznik diffu, więc osobny instruction-size guard może być kolejnym taskiem.
+Follow-up: rozważyć osobny guard długości instrukcji, jeśli CLAUDE.md/AGENTS.md zaczną puchnąć.
