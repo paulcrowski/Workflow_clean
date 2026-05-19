@@ -8,6 +8,8 @@
   },
   "scripts": {
     "hooks:install": "git config core.hooksPath .githooks",
+    "task:new": "node scripts/task-lifecycle.js new",
+    "task:close": "node scripts/task-lifecycle.js close",
     "gate:local": "npm run check:task && npm run check:task-freshness && npm run check:scope && npm run check:diff-size && npm run check:godfiles && npm run check:project-gates && npm run check:import-boundaries",
     "gate:pr": "npm run check:task && npm run check:task-freshness && npm run check:scope && npm run check:diff-size && npm run check:godfiles && npm run check:project-gates && npm run check:import-boundaries",
     "gate:main": "npm run gate:pr",

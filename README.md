@@ -24,17 +24,15 @@ Aktualna ocena: **9/10 jako starter workflow**.
 Mocne strony:
 - guardy sa mechaniczne, nie tylko opisane w promptach,
 - agent musi miec aktualny task, scope i dowod PASS / FAIL,
+- agent moze tworzyc i zamykac taski komendami `task:new` / `task:close`,
 - male fixy maja twarde limity diffu,
 - runtime/data/UI taski maja failure-first checklist,
 - po dodaniu aplikacji workflow wymaga realnych `lint/typecheck/test/build`,
 - import boundaries sa sprawdzane przez konfig w repo.
 
-To nie jest jeszcze 10/10, bo celowo nie ma:
-- generatora taskow,
-- komendy zamykajacej i archiwizujacej task,
-- presetow per stack (`vite-react`, `next`, `expo`, `node-api`, `python`).
+To nie jest jeszcze 10/10, bo celowo nie ma presetow per stack (`vite-react`, `next`, `expo`, `node-api`, `python`).
 
-Tych rzeczy nie warto dodawac na slepo. Dodaj je dopiero, gdy reczne utrzymanie taska albo konfiguracja nowego stacka zaczna realnie spowalniac prace.
+Presetow nie warto dodawac na slepo. Dodaj je dopiero, gdy konfiguracja nowego stacka zacznie realnie spowalniac prace.
 
 ## Co to daje
 
@@ -44,6 +42,35 @@ Tych rzeczy nie warto dodawac na slepo. Dodaj je dopiero, gdy reczne utrzymanie 
 - `tasks/todo.md` jest aktualnym taskiem.
 - `tasks/TASK_TEMPLATE.md` jest czystym formularzem do skopiowania przy nowym tasku.
 - `scripts/` zawiera mechaniczne guardy dla taska, scope locka, diffu i duzych plikow.
+
+## Task lifecycle dla Codexa
+
+Ty dalej mowisz normalnie: "zrob X". Codex pod spodem moze uzyc tych komend, zeby nie przepisywac taska recznie.
+
+Nowy task:
+
+```bash
+npm run task:new -- --slug simple-fix --mode MINIMAL_FIX --change-mode code-change --files src/example.js --outcome "Naprawic prosty blad" --success "gate PASS"
+```
+
+Co to robi:
+- tworzy swiezy `tasks/todo.md`,
+- ustawia date, task ID, tryb pracy i scope,
+- dopisuje allowliste plikow,
+- zostawia miejsce na root cause, testy i dowod.
+
+Zamkniecie taska:
+
+```bash
+npm run task:close -- --result PASS
+```
+
+Co to robi:
+- zapisuje skonczony task do `tasks/archive/`,
+- zostawia `tasks/todo.md` w stanie `ready-for-next-task`,
+- blokuje przypadkowe kodowanie na starym scope.
+
+To sa narzedzia dla agenta. Nie musisz ich uruchamiac recznie, jesli pracujesz przez Codexa.
 
 ## Start w nowym projekcie
 
@@ -55,7 +82,7 @@ npm install
 npm run hooks:install
 ```
 
-3. Skopiuj `tasks/TASK_TEMPLATE.md` do `tasks/todo.md` i wypelnij realny task.
+3. Utworz realny task komenda `npm run task:new -- --slug ... --files ...`.
 4. W `tasks/todo.md` ustaw:
    - `Task ID`, `Task Date` i `Task Status: ACTIVE`,
    - `Tryb zmiany: code-change`, `audit-only` albo `release-build`,

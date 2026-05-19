@@ -74,3 +74,18 @@ Dla runtime, danych, API, workerów, parserów, providerów, UI statusu i side-e
 
 ## Test / guardrail
 `AGENTS.md` ma krótki `Failure-first` anchor, a szczegóły nadal żyją w `docs/ARCHITECTURE_GUARDS.md`.
+
+## Data
+2026-05-19
+
+## Błąd
+Agent musiał ręcznie przepisywać `tasks/todo.md` przy starcie i końcu pracy.
+
+## Przyczyna
+Workflow miał mechaniczne guardy, ale nie miał mechanicznego lifecycle taska.
+
+## Reguła zapobiegawcza
+Codex powinien tworzyć nowy task przez `task:new`, a zakończony task archiwizować przez `task:close`.
+
+## Test / guardrail
+`scripts/task-lifecycle.js` obsługuje `task:new` i `task:close`; ma fixture-friendly opcje `--task-file` i `--archive-dir`, więc można je testować bez ruszania realnego taska.

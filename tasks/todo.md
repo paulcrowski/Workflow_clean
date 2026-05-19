@@ -1,43 +1,45 @@
 # Current Task
 
-Task ID: 2026-05-19-failure-first-anchor
+Task ID: 2026-05-19-task-lifecycle-tools
 Task Date: 2026-05-19
 Task Status: ACTIVE
 
 ## Tryb pracy
-MINIMAL_FIX
+FEATURE
 
 Uzasadnienie trybu:
-Mała poprawka dokumentacji workflow: istniejące runtime guardy są dobre, ale główna instrukcja powinna krótko przypominać failure-first mindset.
+Dodaję dwa małe narzędzia operacyjne dla agenta: tworzenie nowego taska i zamykanie taska do archiwum.
 
 ## Cel / Outcome
-Workflow ma widocznie wymuszać pytanie: co się stanie, gdy flow dostanie złe dane, retry, duplikat, partial write albo kłamliwy UI state.
+Codex ma móc uruchomić komendę zamiast ręcznie przepisywać `tasks/todo.md` przy starcie i końcu pracy.
 
 ## Kryteria sukcesu
-- `AGENTS.md` ma krótką failure-first kotwicę dla runtime/data/UI/status tasków.
-- README mówi prostym językiem, że workflow blokuje happy-path-only coding i ma ocenę aktualnego stanu.
-- Nie dokładamy nowego mechanicznego guarda, bo `docs/ARCHITECTURE_GUARDS.md` już pokrywa szczegóły.
+- `npm run task:new -- ...` tworzy poprawny aktywny `tasks/todo.md`.
+- `npm run task:close -- ...` archiwizuje zakończony task i zostawia repo w stanie gotowym na następny task.
+- README prostym językiem pokazuje, kiedy Codex ma używać tych komend.
+- Test na tymczasowym prostym tasku przechodzi bez ruszania realnego taska.
 - `npm run gate:local` PASS.
 
 ## Kontekst dla agenta
-Moduł: workflow docs
+Moduł: workflow task lifecycle
 Tryb zmiany: code-change
-Maksymalny zakres plików: dokumentacja i task evidence
+Maksymalny zakres plików: skrypty task lifecycle, package scripts, README, task evidence
 Dozwolone pliki do zmiany:
-- AGENTS.md
+- package.json
 - README.md
+- scripts/task-lifecycle.js
 - tasks/todo.md
 - tasks/lessons.md
-Kontrakty do przeczytania: AGENTS.md, README.md, docs/ARCHITECTURE_GUARDS.md
-Pliki zakazane: scripts/**, package.json, workflow/**
-Czego nie ruszać: istniejące guard scripts, import boundary config, release gate
+Kontrakty do przeczytania: AGENTS.md, README.md, tasks/TASK_TEMPLATE.md, scripts/check-task.js, scripts/check-scope.js
+Pliki zakazane: docs/**, workflow/**, istniejące check-* scripts poza odczytem
+Czego nie ruszać: gate logic, import boundaries, diff limits, project gates
 
 ## Zakres
-Moduł: workflow docs
-Pliki: `AGENTS.md`, `README.md`, `tasks/todo.md`, `tasks/lessons.md`
+Moduł: workflow task lifecycle
+Pliki: `package.json`, `README.md`, `scripts/task-lifecycle.js`, `tasks/todo.md`, `tasks/lessons.md`
 
 ## Reprodukcja / dowód problemu
-`docs/ARCHITECTURE_GUARDS.md` pokrywa terminal states, retry, idempotency, backpressure i UI truth, ale `AGENTS.md` nie ma krótkiego failure-first skrótu widocznego przy szybkim tasku.
+Nowy task trzeba dziś składać ręcznie w `tasks/todo.md`; przy zamykaniu pracy nie ma jednej komendy do archiwizacji i przygotowania czystego następnego stanu.
 
 ## Escalation
 Czy brakuje danych do bezpiecznej zmiany?
@@ -46,71 +48,74 @@ NIE
 Jeśli TAK:
 Brakujące dane: brak
 Czego nie da się potwierdzić: brak
-Ryzyko kodowania teraz: niskie, zmiana jest dokumentacyjna
-Najmniejszy następny krok: dodać krótką kotwicę bez nowych guardów
+Ryzyko kodowania teraz: niskie, bo narzędzia działają na plikach workflow i można je testować na fixture
+Najmniejszy następny krok: dodać dwa skrypty bez zmieniania istniejących guardów
 
 ## Klasyfikacja
 REQUIRED
 
 Uzasadnienie:
-To nie jest nowa polityka, tylko wyciągnięcie najważniejszej zasady runtime na poziom instrukcji startowej.
+To są dwa wskazane brakujące elementy do codziennego używania workflow przez Codexa, bez ręcznego przepisywania taska.
 
 ## Diagnoza
-Root cause: failure-first zasady były w szczegółowym dokumencie, ale nie w krótkim entrypoincie.
-Dowód: `AGENTS.md` odsyła do `docs/ARCHITECTURE_GUARDS.md`, ale nie streszcza 6 pytań runtime.
-Aktualny flow: agent może przy szybkim tasku widzieć scope/diff rules, a nie zobaczyć od razu produkcyjnej nieufności.
+Root cause: workflow ma guardy, ale lifecycle taska jest ręczny.
+Dowód: `package.json` nie ma `task:new` ani `task:close`; README każe kopiować `TASK_TEMPLATE.md`.
+Aktualny flow: agent ręcznie edytuje task na początku i końcu pracy.
 
 ## Granice
-Moduły dotknięte: workflow docs
-Kontrakty dotknięte: brak runtime kontraktów
-Poza zakresem: nowe skrypty, parsery, task generator, task close
+Moduły dotknięte: task lifecycle scripts, README
+Kontrakty dotknięte: format `tasks/todo.md`
+Poza zakresem: stack presets, nowe gate'y, zmiany w check-scope/check-task
 
 ## Kontrakt
-INPUT: dokumentacja workflow.
-SUCCESS: zasada failure-first jest widoczna i nie dubluje całego `ARCHITECTURE_GUARDS`.
-ERRORS: przeładowanie `AGENTS.md`, nowe zasady bez mechaniki, zmiana scope.
+INPUT: CLI args, `tasks/todo.md`, opcjonalny katalog archiwum.
+SUCCESS: nowy task ma pełny format; zamknięty task trafia do archiwum; repo ma świeży aktywny task techniczny po close.
+ERRORS: brak slug, brak plików w code-change, próba nadpisania bez `--force`, zamknięcie bez PASS/FAIL.
 STATUSES: PASS / FAIL.
-SIDE EFFECTS: brak.
-LOGS: `npm run gate:local`.
-TESTS: gate lokalny.
-DONE: dokumentacja jasno mówi, że runtime/data/UI task wymaga root cause, kontraktu, failure modes, statusów, test planu i dowodu.
+SIDE EFFECTS: zapis `tasks/todo.md`, opcjonalny zapis `tasks/archive/*.md`.
+LOGS: output skryptów.
+TESTS: fixture przez env vars i `npm run gate:local`.
+DONE: Codex może użyć komend zamiast ręcznie kleić task lifecycle.
 
 ## Failure modes
-Timeout: nie dotyczy.
-Null/missing data: nie dotyczy.
-Invalid schema: nie dotyczy.
-Duplicate request: nie dotyczy.
-Concurrent request: nie dotyczy.
-Partial write: nie dotyczy.
+Timeout: skrypty są krótkie i synchroniczne.
+Null/missing data: brak wymaganych argumentów kończy się FAIL.
+Invalid schema: wygenerowany task musi przejść `check-task`.
+Duplicate request: istniejący archive file failuje bez `--force`.
+Concurrent request: nieobsługiwane; lokalny workflow zakłada jeden agent na repo.
+Partial write: zapis idzie przez temp file i rename.
 Worker crash: nie dotyczy.
 Retry loop: nie dotyczy.
 Provider unavailable: nie dotyczy.
 
 ## Guard Scope
 REQUIRED GUARDS:
-- krótka failure-first kotwica w `AGENTS.md`.
-- prosty opis w README.
+- walidacja minimalnych argumentów `task:new`.
+- odmowa nadpisania aktywnego niezamkniętego taska bez `--force`.
+- odmowa `task:close`, jeśli review nie ma PASS albo FAIL.
+- test na tymczasowym tasku.
 
 NICE_TO_HAVE GUARDS:
-- przyszły task generator.
-- task close/archive command.
+- interaktywny prompt CLI.
+- stack presets.
 
 OVERBUILD GUARDS:
-- nowy runtime checker bez konkretnej aplikacji.
+- pełny task orchestrator.
+- baza tasków.
 
 ParkingLot.md updated:
 NOT_NEEDED
 
 ## Runtime guards
-State machine: nie dotyczy dla tej dokumentacyjnej zmiany.
-Error classification: nie dotyczy.
-Idempotency: nie dotyczy.
+State machine: task jest ACTIVE, a close tworzy archive i nowy ready task.
+Error classification: błędy CLI kończą proces z kodem 1.
+Idempotency: `--force` wymagany do nadpisania archive albo aktywnego taska.
 Single-flight: nie dotyczy.
 Worker lock: nie dotyczy.
 Circuit breaker: nie dotyczy.
 Backpressure: nie dotyczy.
 UI truth: nie dotyczy.
-Observability: `gate:local` jako dowód.
+Observability: skrypty wypisują utworzony task albo archiwum.
 
 ## Code Structure Guard
 Czy dotykamy pliku >300 LOC?
@@ -149,24 +154,28 @@ Czy adapter przecieka do core?
 NIE
 
 ## Change Isolation
-Ile modułów dotyka zmiana: jeden obszar docs.
+Ile modułów dotyka zmiana: jeden obszar task lifecycle.
 Czy to naturalne: tak.
-Czy da się ograniczyć zmianę do jednego kontraktu: tak.
+Czy da się ograniczyć zmianę do jednego kontraktu: tak, format `tasks/todo.md`.
 
 ## Plan
-- [x] Porównać wklejone zasady z realnymi docs/guardami.
-- [x] Wskazać lukę widoczności w `AGENTS.md`.
-- [x] Dodać krótki failure-first anchor.
+- [x] Przeczytać istniejące task/check scripts.
+- [x] Dodać `task:new`.
+- [x] Dodać `task:close`.
+- [x] Dodać package scripts i README.
+- [x] Sprawdzić na prostym fixture.
 - [x] Uruchomić `npm run gate:local`.
 
 ## Weryfikacja
 Komendy:
-`npm run gate:local`
+`npm run task:new -- --task-file /tmp/workflow-task/todo.md --slug simple-code-check --mode MINIMAL_FIX --change-mode code-change --files src/example.js --outcome "Sprawdzic prosty kod" --success "Task ma poprawny format" --force`
+`npm run task:close -- --task-file /tmp/workflow-task/todo.md --archive-dir /tmp/workflow-task/archive --result PASS --force`
+`npm run gate:local && git diff --check`
 Expected result: PASS.
 
 ## Definition of Done
 - [x] test PASS
-- [x] build NOT_NEEDED, dokumentacja
+- [x] build NOT_NEEDED, skrypty Node bez buildu
 - [x] brak ERROR w logach
 - [x] zmiana nie wychodzi poza zakres
 - [x] brak refaktoru przy okazji
@@ -180,8 +189,8 @@ Expected result: PASS.
 - [x] implementowano tylko REQUIRED GUARDS
 
 ## Review / Wyniki
-Co zmieniono: dodano krótką sekcję `Failure-first` do `AGENTS.md`, dopisano happy-path-only risk, ocenę workflow i brakujące 10/10 elementy do README oraz lesson.
-Jak sprawdzono: `npm run gate:local`, `git diff --check`.
+Co zmieniono: dodano `task:new` i `task:close` przez `scripts/task-lifecycle.js`, podpięto npm scripts, opisano workflow w README i dopisano lesson.
+Jak sprawdzono: fixture `/tmp/workflow-task` dla prostego `src/example.js`, `npm run gate:local`, `git diff --check`.
 PASS / FAIL: PASS
-Ryzyka: brak, o ile nie rozdmuchamy AGENTS.md.
-Follow-up: brak.
+Ryzyka: `task:close` resetuje repo do `ready-for-next-task`, więc przed kolejnym kodowaniem trzeba użyć `task:new`.
+Follow-up: stack presets dopiero po realnym projekcie.
