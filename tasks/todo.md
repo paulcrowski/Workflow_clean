@@ -1,53 +1,43 @@
 # Current Task
 
-Task ID: 2026-05-12-future-work-gates
-Task Date: 2026-05-12
+Task ID: 2026-05-19-failure-first-anchor
+Task Date: 2026-05-19
 Task Status: ACTIVE
 
 ## Tryb pracy
-STRUCTURE_FIX
+MINIMAL_FIX
 
 Uzasadnienie trybu:
-Dodaję dwa mechaniczne guardy pod przyszłe aplikacje: realne komendy projektu oraz import boundaries.
+Mała poprawka dokumentacji workflow: istniejące runtime guardy są dobre, ale główna instrukcja powinna krótko przypominać failure-first mindset.
 
 ## Cel / Outcome
-Workflow ma lepiej chronić przyszłą pracę w realnych aplikacjach: jeśli pojawi się kod aplikacji, bramy mają wymagać `lint/typecheck/test/build`; jeśli jest skonfigurowana mapa warstw, bramy mają blokować zakazane importy.
+Workflow ma widocznie wymuszać pytanie: co się stanie, gdy flow dostanie złe dane, retry, duplikat, partial write albo kłamliwy UI state.
 
 ## Kryteria sukcesu
-- Starter bez aplikacji przechodzi bez fałszywych wymagań.
-- Gdy app code istnieje, brak `lint/typecheck/test/build` failuje.
-- Project gates potrafią uruchomić skonfigurowane komendy.
-- Import-boundary checker używa konfigu, a nie twardych założeń o stacku.
-- Zakazany import failuje w teście.
-- `gate:local` i `gate:pr` uruchamiają nowe guardy.
+- `AGENTS.md` ma krótką failure-first kotwicę dla runtime/data/UI/status tasków.
+- README mówi prostym językiem, że workflow blokuje happy-path-only coding i ma ocenę aktualnego stanu.
+- Nie dokładamy nowego mechanicznego guarda, bo `docs/ARCHITECTURE_GUARDS.md` już pokrywa szczegóły.
+- `npm run gate:local` PASS.
 
 ## Kontekst dla agenta
-Moduł: workflow guards
+Moduł: workflow docs
 Tryb zmiany: code-change
-Maksymalny zakres plików: workflow guard scripts, config, docs, task evidence
+Maksymalny zakres plików: dokumentacja i task evidence
 Dozwolone pliki do zmiany:
+- AGENTS.md
 - README.md
-- RELEASE_GATE.md
-- package.json
-- scripts/check-diff-size.js
-- scripts/check-scope.js
-- scripts/check-import-boundaries.js
-- scripts/check-project-gates.js
-- scripts/check-task-freshness.js
-- tasks/TASK_TEMPLATE.md
 - tasks/todo.md
 - tasks/lessons.md
-- workflow/import-boundaries.json
-Kontrakty do przeczytania: AGENTS.md, README.md, RELEASE_GATE.md, docs/CODE_STRUCTURE_GUARDS.md
-Pliki zakazane: kod aplikacji, artifacts/**
-Czego nie ruszać: scope guard, diff-size guard, godfile guard, generator tasków
+Kontrakty do przeczytania: AGENTS.md, README.md, docs/ARCHITECTURE_GUARDS.md
+Pliki zakazane: scripts/**, package.json, workflow/**
+Czego nie ruszać: istniejące guard scripts, import boundary config, release gate
 
 ## Zakres
-Moduł: workflow guards
-Pliki: package scripts, two new guard scripts, import-boundary config, docs, task evidence
+Moduł: workflow docs
+Pliki: `AGENTS.md`, `README.md`, `tasks/todo.md`, `tasks/lessons.md`
 
 ## Reprodukcja / dowód problemu
-Obecny starter mówi, żeby po stworzeniu aplikacji dopiąć lint/typecheck/test/build i pilnować modularności, ale nie ma mechanicznego guarda, który to wymusi.
+`docs/ARCHITECTURE_GUARDS.md` pokrywa terminal states, retry, idempotency, backpressure i UI truth, ale `AGENTS.md` nie ma krótkiego failure-first skrótu widocznego przy szybkim tasku.
 
 ## Escalation
 Czy brakuje danych do bezpiecznej zmiany?
@@ -56,73 +46,71 @@ NIE
 Jeśli TAK:
 Brakujące dane: brak
 Czego nie da się potwierdzić: brak
-Ryzyko kodowania teraz: średnie, bo guardy muszą być konfigurowalne i nie mogą blokować pustego startera
-Najmniejszy następny krok: dodać wykrywanie app code oraz config-driven import-boundary checker
+Ryzyko kodowania teraz: niskie, zmiana jest dokumentacyjna
+Najmniejszy następny krok: dodać krótką kotwicę bez nowych guardów
 
 ## Klasyfikacja
 REQUIRED
 
 Uzasadnienie:
-To były dwa wskazane braki przed użyciem workflow w przyszłych aplikacjach.
+To nie jest nowa polityka, tylko wyciągnięcie najważniejszej zasady runtime na poziom instrukcji startowej.
 
 ## Diagnoza
-Root cause: workflow miał dobre zasady modułowości i testowania, ale brakowało wykonawczych bram dla realnego stacka aplikacji.
-Dowód: `package.json` nie ma `check:project-gates` ani `check:import-boundaries`; README mówi o ręcznym dopięciu komend.
-Aktualny flow: agent może stworzyć appkę bez test/build scripts albo złamać zależności warstw i nadal przejść obecne starterowe gate'y.
+Root cause: failure-first zasady były w szczegółowym dokumencie, ale nie w krótkim entrypoincie.
+Dowód: `AGENTS.md` odsyła do `docs/ARCHITECTURE_GUARDS.md`, ale nie streszcza 6 pytań runtime.
+Aktualny flow: agent może przy szybkim tasku widzieć scope/diff rules, a nie zobaczyć od razu produkcyjnej nieufności.
 
 ## Granice
-Moduły dotknięte: workflow guard scripts, package scripts, docs
-Kontrakty dotknięte: `package.json` scripts, `workflow/import-boundaries.json`
-Poza zakresem: ESLint plugin, TypeScript compiler integration, generator aplikacji
+Moduły dotknięte: workflow docs
+Kontrakty dotknięte: brak runtime kontraktów
+Poza zakresem: nowe skrypty, parsery, task generator, task close
 
 ## Kontrakt
-INPUT: `package.json`, opcjonalny kod aplikacji, opcjonalny `workflow/import-boundaries.json`.
-SUCCESS: brak aplikacji = pass; aplikacja = wymagane i uruchomione project gates; import boundaries = brak zakazanych importów.
-ERRORS: brak wymaganego scriptu, placeholder script, komenda failuje, zakazany import.
+INPUT: dokumentacja workflow.
+SUCCESS: zasada failure-first jest widoczna i nie dubluje całego `ARCHITECTURE_GUARDS`.
+ERRORS: przeładowanie `AGENTS.md`, nowe zasady bez mechaniki, zmiana scope.
 STATUSES: PASS / FAIL.
-SIDE EFFECTS: uruchomienie project scripts, odczyt plików źródłowych.
-LOGS: output guard scripts.
-TESTS: env-based fixture tests i `npm run gate:local`.
-DONE: przyszła aplikacja nie przejdzie bez realnych komend i zgodnych importów.
+SIDE EFFECTS: brak.
+LOGS: `npm run gate:local`.
+TESTS: gate lokalny.
+DONE: dokumentacja jasno mówi, że runtime/data/UI task wymaga root cause, kontraktu, failure modes, statusów, test planu i dowodu.
 
 ## Failure modes
-Timeout: project scripts dziedziczą timeout procesu uruchamiającego gate.
-Null/missing data: brak configu import boundaries kończy się SKIP/PASS, bo config jest per stack.
-Invalid schema: zły config kończy się FAIL.
-Duplicate request: checki są idempotentne.
+Timeout: nie dotyczy.
+Null/missing data: nie dotyczy.
+Invalid schema: nie dotyczy.
+Duplicate request: nie dotyczy.
 Concurrent request: nie dotyczy.
-Partial write: niepełny config albo package kończy się FAIL.
+Partial write: nie dotyczy.
 Worker crash: nie dotyczy.
 Retry loop: nie dotyczy.
 Provider unavailable: nie dotyczy.
 
 ## Guard Scope
 REQUIRED GUARDS:
-- wykrycie app code i wymaganie `lint/typecheck/test/build`.
-- uruchomienie wymaganych project scripts.
-- config-driven import-boundary checker.
-- wpięcie guardów w `gate:local` i `gate:pr`.
+- krótka failure-first kotwica w `AGENTS.md`.
+- prosty opis w README.
 
 NICE_TO_HAVE GUARDS:
-- osobny preset dla Expo/Next/Vite.
-- pełny AST parser importów.
+- przyszły task generator.
+- task close/archive command.
 
 OVERBUILD GUARDS:
-- własny system build orchestratora.
+- nowy runtime checker bez konkretnej aplikacji.
 
 ParkingLot.md updated:
 NOT_NEEDED
 
 ## Runtime guards
-State machine: nie dotyczy.
-Error classification: CLI PASS / FAIL.
-Idempotency: check można uruchamiać wielokrotnie.
+State machine: nie dotyczy dla tej dokumentacyjnej zmiany.
+Error classification: nie dotyczy.
+Idempotency: nie dotyczy.
 Single-flight: nie dotyczy.
 Worker lock: nie dotyczy.
 Circuit breaker: nie dotyczy.
 Backpressure: nie dotyczy.
 UI truth: nie dotyczy.
-Observability: output pokazuje wykrycie aplikacji, uruchomione scripts i naruszenia importów.
+Observability: `gate:local` jako dowód.
 
 ## Code Structure Guard
 Czy dotykamy pliku >300 LOC?
@@ -161,28 +149,24 @@ Czy adapter przecieka do core?
 NIE
 
 ## Change Isolation
-Ile modułów dotyka zmiana: jeden obszar workflow guards.
+Ile modułów dotyka zmiana: jeden obszar docs.
 Czy to naturalne: tak.
-Czy da się ograniczyć zmianę do jednego kontraktu: tak, package scripts plus import-boundaries config.
+Czy da się ograniczyć zmianę do jednego kontraktu: tak.
 
 ## Plan
-- [x] Zdefiniować najmniejszy wariant bez fałszywych stack assumptions.
-- [x] Dodać project-gates guard.
-- [x] Dodać import-boundary guard i config.
-- [x] Wpiąć guardy w gates.
-- [x] Zaktualizować docs i lessons.
-- [x] Uruchomić testy negatywne/pozytywne oraz `npm run gate:local`.
+- [x] Porównać wklejone zasady z realnymi docs/guardami.
+- [x] Wskazać lukę widoczności w `AGENTS.md`.
+- [x] Dodać krótki failure-first anchor.
+- [x] Uruchomić `npm run gate:local`.
 
 ## Weryfikacja
 Komendy:
-`CHECK_PROJECT_ROOT=/tmp/app CHECK_PROJECT_DRY_RUN=1 node scripts/check-project-gates.js`
-`CHECK_IMPORT_ROOT=/tmp/import-fixture CHECK_IMPORT_CONFIG=/tmp/import-fixture/workflow/import-boundaries.json node scripts/check-import-boundaries.js`
 `npm run gate:local`
-Expected result: brak scripts w app fixture failuje, poprawne scripts przechodzą w dry-run, zakazany import failuje, lokalny starter przechodzi.
+Expected result: PASS.
 
 ## Definition of Done
 - [x] test PASS
-- [x] build NOT_NEEDED, starter nie ma aplikacji do zbudowania
+- [x] build NOT_NEEDED, dokumentacja
 - [x] brak ERROR w logach
 - [x] zmiana nie wychodzi poza zakres
 - [x] brak refaktoru przy okazji
@@ -196,8 +180,8 @@ Expected result: brak scripts w app fixture failuje, poprawne scripts przechodz�
 - [x] implementowano tylko REQUIRED GUARDS
 
 ## Review / Wyniki
-Co zmieniono: dodano `check-project-gates`, `check-import-boundaries`, `workflow/import-boundaries.json`, wpięto nowe guardy w `gate:local` i `gate:pr`; dodatkowo naprawiono `check-scope`, żeby dla nowych katalogów sprawdzał realne pliki przez `--untracked-files=all`.
-Jak sprawdzono: fixture bez project scripts failuje; fixture z project scripts przechodzi w dry-run; zakazany import core -> ui failuje; dozwolony import ui -> core przechodzi; `npm run gate:local` przechodzi.
+Co zmieniono: dodano krótką sekcję `Failure-first` do `AGENTS.md`, dopisano happy-path-only risk, ocenę workflow i brakujące 10/10 elementy do README oraz lesson.
+Jak sprawdzono: `npm run gate:local`, `git diff --check`.
 PASS / FAIL: PASS
-Ryzyka: import parser jest regex-based dla import/require; egzotyczne dynamic importy wymagają stack-specific toolingu.
-Follow-up: preset per stack dopiero po realnym projekcie.
+Ryzyka: brak, o ile nie rozdmuchamy AGENTS.md.
+Follow-up: brak.

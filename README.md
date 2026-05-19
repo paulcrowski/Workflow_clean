@@ -10,11 +10,31 @@ Cel jest prosty: agent ma robic jedna potrzebna zmiane, w dozwolonych plikach, z
 - kodowanie bez aktualnego taska,
 - zmiany poza zakresem,
 - za duzy diff dla malego fixa,
+- happy-path-only coding bez terminal states, retry policy i failure modes,
 - audit, ktory po cichu zmienia pliki,
 - aplikacje bez realnych `lint/typecheck/test/build`,
 - importy lamiace granice warstw.
 
 Dlaczego to istnieje: same instrukcje w promptach nie wystarczaja. Ten starter przenosi najwazniejsze zasady do repo i hookow, zeby bledy byly blokowane mechanicznie przed commitem albo PR.
+
+## Ocena stanu
+
+Aktualna ocena: **9/10 jako starter workflow**.
+
+Mocne strony:
+- guardy sa mechaniczne, nie tylko opisane w promptach,
+- agent musi miec aktualny task, scope i dowod PASS / FAIL,
+- male fixy maja twarde limity diffu,
+- runtime/data/UI taski maja failure-first checklist,
+- po dodaniu aplikacji workflow wymaga realnych `lint/typecheck/test/build`,
+- import boundaries sa sprawdzane przez konfig w repo.
+
+To nie jest jeszcze 10/10, bo celowo nie ma:
+- generatora taskow,
+- komendy zamykajacej i archiwizujacej task,
+- presetow per stack (`vite-react`, `next`, `expo`, `node-api`, `python`).
+
+Tych rzeczy nie warto dodawac na slepo. Dodaj je dopiero, gdy reczne utrzymanie taska albo konfiguracja nowego stacka zaczna realnie spowalniac prace.
 
 ## Co to daje
 

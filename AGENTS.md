@@ -95,6 +95,20 @@ Zasady:
 - artifacts/** jest zablokowane poza release-build.
 - unexpected change = STOP i popraw scope albo cofnij własną zmianę.
 
+## Failure-first
+
+Dla runtime, danych, API, workerów, parserów, providerów, UI statusu i side-effectów nie wystarczy happy path.
+
+Przed kodowaniem wskaż:
+1. root cause,
+2. kontrakt,
+3. failure modes,
+4. state machine / statusy,
+5. plan testów,
+6. dowód PASS / FAIL.
+
+Jeśli nie da się opisać końca flow, retry policy, idempotencji albo źródła prawdy, nie koduj. Stosuj `docs/ARCHITECTURE_GUARDS.md`.
+
 ## Modularność
 
 Repo ma być AI-readable.

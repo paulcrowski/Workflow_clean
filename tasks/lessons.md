@@ -59,3 +59,18 @@ Pusty starter nie udaje testów, ale po wykryciu kodu aplikacji musi wymagać re
 
 ## Test / guardrail
 `scripts/check-project-gates.js` wymaga `lint/typecheck/test/build` po wykryciu app code; `scripts/check-import-boundaries.js` blokuje zakazane lokalne importy według `workflow/import-boundaries.json`.
+
+## Data
+2026-05-19
+
+## Błąd
+Failure-first zasady były dobrze opisane w `docs/ARCHITECTURE_GUARDS.md`, ale krótki entrypoint `AGENTS.md` nie przypominał wprost 6 pytań dla runtime/data/UI/status tasków.
+
+## Przyczyna
+Szczegółowa procedura była poprawna, ale najważniejszy skrót produkcyjnej nieufności mógł zniknąć przy szybkim tasku.
+
+## Reguła zapobiegawcza
+Dla runtime, danych, API, workerów, parserów, providerów, UI statusu i side-effectów agent musi przed kodem wskazać root cause, kontrakt, failure modes, state/statusy, test plan i dowód PASS/FAIL.
+
+## Test / guardrail
+`AGENTS.md` ma krótki `Failure-first` anchor, a szczegóły nadal żyją w `docs/ARCHITECTURE_GUARDS.md`.
