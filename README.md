@@ -9,6 +9,7 @@ Ten repozytorium daje maly, mechaniczny workflow dla pracy z agentem AI.
 Cel jest prosty: agent ma robic jedna potrzebna zmiane, w dozwolonych plikach, z dowodem PASS / FAIL. Workflow blokuje typowe problemy:
 - kodowanie bez aktualnego taska,
 - zmiany poza zakresem,
+- dryf w łatwe zielone slice'y zamiast największego blockera,
 - za duzy diff dla malego fixa,
 - happy-path-only coding bez terminal states, retry policy i failure modes,
 - audit, ktory po cichu zmienia pliki,
@@ -24,6 +25,7 @@ Aktualna ocena: **9/10 jako starter workflow**.
 Mocne strony:
 - guardy sa mechaniczne, nie tylko opisane w promptach,
 - agent musi miec aktualny task, scope i dowod PASS / FAIL,
+- task musi mówić, czy rusza największy blocker,
 - agent moze tworzyc i zamykac taski komendami `task:new` / `task:close`,
 - male fixy maja twarde limity diffu,
 - runtime/data/UI taski maja failure-first checklist,
@@ -117,6 +119,7 @@ npm run gate:pr
 `gate:local` i `gate:pr` sprawdzaja:
 
 - task ma wypelniony formularz,
+- task wskazuje największy blocker i czy aktualna praca go rusza,
 - task ma aktywny status, identyfikator i swieza date,
 - zmienione pliki mieszcza sie w scope locku,
 - `audit-only` nie zmienia zadnych plikow,

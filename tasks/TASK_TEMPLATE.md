@@ -16,6 +16,11 @@ Uzasadnienie trybu:
 ## Kryteria sukcesu
 ...
 
+## Priorytet / Blocker
+Największy blocker teraz:
+Czy ten task rusza blocker: TAK / NIE
+Dlaczego mimo to robimy teraz:
+
 ## Kontekst dla agenta
 Moduł:
 Tryb zmiany: code-change / audit-only / release-build

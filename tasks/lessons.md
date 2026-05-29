@@ -89,3 +89,18 @@ Codex powinien tworzyć nowy task przez `task:new`, a zakończony task archiwizo
 
 ## Test / guardrail
 `scripts/task-lifecycle.js` obsługuje `task:new` i `task:close`; ma fixture-friendly opcje `--task-file` i `--archive-dir`, więc można je testować bez ruszania realnego taska.
+
+## Data
+2026-05-29
+
+## Błąd
+Agent może mylić łatwy zielony progres w repo z realnym postępem wobec najważniejszego blockera produktu.
+
+## Przyczyna
+Task miał scope, testy i dowód PASS/FAIL, ale nie wymuszał odpowiedzi, czy aktualna praca rusza największy blocker.
+
+## Reguła zapobiegawcza
+Każdy task musi mieć `Priorytet / Blocker`: największy blocker teraz, czy task go rusza, a jeśli nie, dlaczego mimo to robimy go teraz.
+
+## Test / guardrail
+`scripts/check-task.js` wymaga sekcji `Priorytet / Blocker`, a `scripts/task-lifecycle.js` generuje ją dla nowych tasków.

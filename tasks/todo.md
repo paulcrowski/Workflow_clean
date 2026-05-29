@@ -1,45 +1,49 @@
 # Current Task
 
-Task ID: 2026-05-19-task-lifecycle-tools
-Task Date: 2026-05-19
+Task ID: 2026-05-29-blocker-priority-guard
+Task Date: 2026-05-29
 Task Status: ACTIVE
 
 ## Tryb pracy
 FEATURE
 
 Uzasadnienie trybu:
-Dodaję dwa małe narzędzia operacyjne dla agenta: tworzenie nowego taska i zamykanie taska do archiwum.
+Task utworzony przez task lifecycle.
 
 ## Cel / Outcome
-Codex ma móc uruchomić komendę zamiast ręcznie przepisywać `tasks/todo.md` przy starcie i końcu pracy.
+Zablokowac dryf w latwe zielone slice'y przez jawny blocker taska
 
 ## Kryteria sukcesu
-- `npm run task:new -- ...` tworzy poprawny aktywny `tasks/todo.md`.
-- `npm run task:close -- ...` archiwizuje zakończony task i zostawia repo w stanie gotowym na następny task.
-- README prostym językiem pokazuje, kiedy Codex ma używać tych komend.
-- Test na tymczasowym prostym tasku przechodzi bez ruszania realnego taska.
-- `npm run gate:local` PASS.
+- Task wymaga odpowiedzi czy praca rusza najwiekszy blocker
+
+## Priorytet / Blocker
+Największy blocker teraz: workflow nie zatrzymuje agenta przed łatwym zielonym slicem, gdy znany jest ważniejszy blocker produktu/live proof.
+Czy ten task rusza blocker: TAK
+Dlaczego mimo to robimy teraz: nie dotyczy
 
 ## Kontekst dla agenta
-Moduł: workflow task lifecycle
+Moduł: workflow
 Tryb zmiany: code-change
-Maksymalny zakres plików: skrypty task lifecycle, package scripts, README, task evidence
+Maksymalny zakres plików: allowlista z taska
 Dozwolone pliki do zmiany:
-- package.json
+- AGENTS.md
 - README.md
-- scripts/task-lifecycle.js
+- tasks/TASK_TEMPLATE.md
 - tasks/todo.md
 - tasks/lessons.md
-Kontrakty do przeczytania: AGENTS.md, README.md, tasks/TASK_TEMPLATE.md, scripts/check-task.js, scripts/check-scope.js
-Pliki zakazane: docs/**, workflow/**, istniejące check-* scripts poza odczytem
-Czego nie ruszać: gate logic, import boundaries, diff limits, project gates
+- scripts/check-task.js
+- scripts/task-lifecycle.js
+- tasks/archive/**
+Kontrakty do przeczytania: AGENTS.md, README.md
+Pliki zakazane: wszystko poza allowlistą
+Czego nie ruszać: pliki poza zakresem
 
 ## Zakres
-Moduł: workflow task lifecycle
-Pliki: `package.json`, `README.md`, `scripts/task-lifecycle.js`, `tasks/todo.md`, `tasks/lessons.md`
+Moduł: workflow
+Pliki: AGENTS.md, README.md, tasks/TASK_TEMPLATE.md, tasks/todo.md, tasks/lessons.md, scripts/check-task.js, scripts/task-lifecycle.js
 
 ## Reprodukcja / dowód problemu
-Nowy task trzeba dziś składać ręcznie w `tasks/todo.md`; przy zamykaniu pracy nie ma jednej komendy do archiwizacji i przygotowania czystego następnego stanu.
+Task utworzony z polecenia użytkownika albo przez zamknięcie poprzedniego taska.
 
 ## Escalation
 Czy brakuje danych do bezpiecznej zmiany?
@@ -48,74 +52,70 @@ NIE
 Jeśli TAK:
 Brakujące dane: brak
 Czego nie da się potwierdzić: brak
-Ryzyko kodowania teraz: niskie, bo narzędzia działają na plikach workflow i można je testować na fixture
-Najmniejszy następny krok: dodać dwa skrypty bez zmieniania istniejących guardów
+Ryzyko kodowania teraz: niskie po utrzymaniu scope locka
+Najmniejszy następny krok: wykonać najmniejszą zmianę z allowlisty
 
 ## Klasyfikacja
 REQUIRED
 
 Uzasadnienie:
-To są dwa wskazane brakujące elementy do codziennego używania workflow przez Codexa, bez ręcznego przepisywania taska.
+Zmiana jest wymagana dla aktualnego stanu workflow.
 
 ## Diagnoza
-Root cause: workflow ma guardy, ale lifecycle taska jest ręczny.
-Dowód: `package.json` nie ma `task:new` ani `task:close`; README każe kopiować `TASK_TEMPLATE.md`.
-Aktualny flow: agent ręcznie edytuje task na początku i końcu pracy.
+Root cause: task wymagał scope i testów, ale nie wymagał odpowiedzi, czy aktualna praca rusza najważniejszy blocker.
+Dowód: agent mógł wybrać kolejny łatwy zielony slice mimo znanego blockera produktu/live proof.
+Aktualny flow: `check-task` waliduje formularz, ale przed tą zmianą nie walidował priorytetu względem blockera.
 
 ## Granice
-Moduły dotknięte: task lifecycle scripts, README
-Kontrakty dotknięte: format `tasks/todo.md`
-Poza zakresem: stack presets, nowe gate'y, zmiany w check-scope/check-task
+Moduły dotknięte: workflow
+Kontrakty dotknięte: format `tasks/todo.md`.
+Poza zakresem: wszystko poza allowlistą.
 
 ## Kontrakt
-INPUT: CLI args, `tasks/todo.md`, opcjonalny katalog archiwum.
-SUCCESS: nowy task ma pełny format; zamknięty task trafia do archiwum; repo ma świeży aktywny task techniczny po close.
-ERRORS: brak slug, brak plików w code-change, próba nadpisania bez `--force`, zamknięcie bez PASS/FAIL.
+INPUT: polecenie użytkownika i pliki z allowlisty.
+SUCCESS: spełnione kryteria sukcesu.
+ERRORS: brak dowodu, zmiana poza scope albo failujące gate'y.
 STATUSES: PASS / FAIL.
-SIDE EFFECTS: zapis `tasks/todo.md`, opcjonalny zapis `tasks/archive/*.md`.
-LOGS: output skryptów.
-TESTS: fixture przez env vars i `npm run gate:local`.
-DONE: Codex może użyć komend zamiast ręcznie kleić task lifecycle.
+SIDE EFFECTS: tylko zmiany w plikach z allowlisty.
+LOGS: komendy weryfikacyjne.
+TESTS: fixture z poprawnym taskiem, fixture bez `Priorytet / Blocker`, `npm run gate:local`.
+DONE: review ma konkretny wynik.
 
 ## Failure modes
-Timeout: skrypty są krótkie i synchroniczne.
-Null/missing data: brak wymaganych argumentów kończy się FAIL.
-Invalid schema: wygenerowany task musi przejść `check-task`.
-Duplicate request: istniejący archive file failuje bez `--force`.
-Concurrent request: nieobsługiwane; lokalny workflow zakłada jeden agent na repo.
-Partial write: zapis idzie przez temp file i rename.
-Worker crash: nie dotyczy.
-Retry loop: nie dotyczy.
-Provider unavailable: nie dotyczy.
+Timeout: przerwać i pokazać ostatni bezpieczny stan.
+Null/missing data: nie zgadywać, użyć ESCALATION.
+Invalid schema: nie dotyczy, chyba że task dotyka danych.
+Duplicate request: sprawdzić idempotencję, jeśli task ma side effecty.
+Concurrent request: nie dotyczy, chyba że task dotyka runtime.
+Partial write: nie zostawiać pustego sukcesu.
+Worker crash: nie dotyczy, chyba że task dotyka workera.
+Retry loop: nie dodawać retry bez klasyfikacji błędów.
+Provider unavailable: nie dotyczy, chyba że task dotyka providera.
 
 ## Guard Scope
 REQUIRED GUARDS:
-- walidacja minimalnych argumentów `task:new`.
-- odmowa nadpisania aktywnego niezamkniętego taska bez `--force`.
-- odmowa `task:close`, jeśli review nie ma PASS albo FAIL.
-- test na tymczasowym tasku.
+- trzymać się allowlisty.
+- uruchomić testy wskazane w tasku.
 
 NICE_TO_HAVE GUARDS:
-- interaktywny prompt CLI.
-- stack presets.
+- pomysły poza zakresem zapisać do ParkingLot.md.
 
 OVERBUILD GUARDS:
-- pełny task orchestrator.
-- baza tasków.
+- nie tworzyć nowego subsystemu bez osobnego taska.
 
 ParkingLot.md updated:
 NOT_NEEDED
 
 ## Runtime guards
-State machine: task jest ACTIVE, a close tworzy archive i nowy ready task.
-Error classification: błędy CLI kończą proces z kodem 1.
-Idempotency: `--force` wymagany do nadpisania archive albo aktywnego taska.
-Single-flight: nie dotyczy.
-Worker lock: nie dotyczy.
-Circuit breaker: nie dotyczy.
-Backpressure: nie dotyczy.
-UI truth: nie dotyczy.
-Observability: skrypty wypisują utworzony task albo archiwum.
+State machine: do uzupełnienia, jeśli dotyczy.
+Error classification: do uzupełnienia, jeśli dotyczy.
+Idempotency: do uzupełnienia, jeśli dotyczy.
+Single-flight: do uzupełnienia, jeśli dotyczy.
+Worker lock: do uzupełnienia, jeśli dotyczy.
+Circuit breaker: do uzupełnienia, jeśli dotyczy.
+Backpressure: do uzupełnienia, jeśli dotyczy.
+UI truth: do uzupełnienia, jeśli dotyczy.
+Observability: komendy weryfikacyjne jako dowód.
 
 ## Code Structure Guard
 Czy dotykamy pliku >300 LOC?
@@ -154,28 +154,28 @@ Czy adapter przecieka do core?
 NIE
 
 ## Change Isolation
-Ile modułów dotyka zmiana: jeden obszar task lifecycle.
+Ile modułów dotyka zmiana: jeden wskazany obszar.
 Czy to naturalne: tak.
-Czy da się ograniczyć zmianę do jednego kontraktu: tak, format `tasks/todo.md`.
+Czy da się ograniczyć zmianę do jednego kontraktu: tak.
 
 ## Plan
-- [x] Przeczytać istniejące task/check scripts.
-- [x] Dodać `task:new`.
-- [x] Dodać `task:close`.
-- [x] Dodać package scripts i README.
-- [x] Sprawdzić na prostym fixture.
-- [x] Uruchomić `npm run gate:local`.
+- [x] Przeczytać pliki z allowlisty.
+- [x] Dodać `Priorytet / Blocker` do template i generatora tasków.
+- [x] Dodać walidację w `check-task`.
+- [x] Zaktualizować README/AGENTS/lessons.
+- [x] Uruchomić weryfikację.
 
 ## Weryfikacja
 Komendy:
-`npm run task:new -- --task-file /tmp/workflow-task/todo.md --slug simple-code-check --mode MINIMAL_FIX --change-mode code-change --files src/example.js --outcome "Sprawdzic prosty kod" --success "Task ma poprawny format" --force`
-`npm run task:close -- --task-file /tmp/workflow-task/todo.md --archive-dir /tmp/workflow-task/archive --result PASS --force`
+`npm run task:new -- --task-file /tmp/workflow-blocker/todo.md --slug live-proof --mode MINIMAL_FIX --change-mode code-change --files src/example.js --outcome "Domknac live proof" --success "live proof PASS" --force`
+`CHECK_TASK_FILE=/tmp/workflow-blocker/todo.md node scripts/check-task.js`
+`CHECK_TASK_FILE=/tmp/workflow-blocker/no-blocker.md node scripts/check-task.js` expected FAIL
 `npm run gate:local && git diff --check`
 Expected result: PASS.
 
 ## Definition of Done
 - [x] test PASS
-- [x] build NOT_NEEDED, skrypty Node bez buildu
+- [x] build NOT_NEEDED, workflow scripts
 - [x] brak ERROR w logach
 - [x] zmiana nie wychodzi poza zakres
 - [x] brak refaktoru przy okazji
@@ -189,8 +189,8 @@ Expected result: PASS.
 - [x] implementowano tylko REQUIRED GUARDS
 
 ## Review / Wyniki
-Co zmieniono: dodano `task:new` i `task:close` przez `scripts/task-lifecycle.js`, podpięto npm scripts, opisano workflow w README i dopisano lesson.
-Jak sprawdzono: fixture `/tmp/workflow-task` dla prostego `src/example.js`, `npm run gate:local`, `git diff --check`.
+Co zmieniono: dodano obowiązkowy blok `Priorytet / Blocker`, walidację w `check-task`, generowanie bloku przez `task:new`, opis w README/AGENTS i lesson.
+Jak sprawdzono: fixture pozytywny, fixture bez bloku failuje, `npm run gate:local`, `git diff --check`.
 PASS / FAIL: PASS
-Ryzyka: `task:close` resetuje repo do `ready-for-next-task`, więc przed kolejnym kodowaniem trzeba użyć `task:new`.
-Follow-up: stack presets dopiero po realnym projekcie.
+Ryzyka: guard wymusza uczciwe nazwanie blockera, ale nadal nie oceni sam jakości uzasadnienia, jeśli agent wpisze słaby tekst.
+Follow-up: brak.

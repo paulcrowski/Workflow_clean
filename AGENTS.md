@@ -65,6 +65,15 @@ OVERBUILD GUARDS:
 Implementuj tylko REQUIRED.
 Resztę zapisz do ParkingLot.md.
 
+## Priorytet / Blocker
+
+Przed kolejnym slicem odpowiedz:
+- jaki jest największy blocker dla realnego domknięcia,
+- czy aktualny task go rusza,
+- jeśli nie, dlaczego mimo to robimy ten task teraz.
+
+Jeśli znany blocker produktu/live proof jest otwarty, nie bierz łatwego zielonego slice’a z innego obszaru, chyba że blocker jest naprawdę zablokowany zewnętrznie i zapiszesz to w tasku.
+
 ## Zasady pracy
 
 1. Jedna zmiana = jeden commit.
@@ -140,6 +149,7 @@ Dla MINIMAL_FIX:
 
 Dla RUNTIME_FIX / STRUCTURE_FIX / FEATURE:
 - tryb pracy,
+- Priorytet / Blocker,
 - diagnoza,
 - granice,
 - kontrakt,

@@ -1,6 +1,6 @@
 const fs = require("fs");
 
-const file = "tasks/todo.md";
+const file = process.env.CHECK_TASK_FILE || "tasks/todo.md";
 
 if (!fs.existsSync(file)) {
   console.error("Missing tasks/todo.md");
@@ -13,6 +13,7 @@ const required = [
   "## Tryb pracy",
   "## Cel / Outcome",
   "## Kryteria sukcesu",
+  "## Priorytet / Blocker",
   "## Kontekst dla agenta",
   "## Zakres",
   "## Reprodukcja / dowód problemu",
@@ -32,7 +33,7 @@ const required = [
 const missing = required.filter(x => !txt.includes(x));
 
 if (missing.length) {
-  console.error("tasks/todo.md missing sections:", missing.join(", "));
+  console.error(`${file} missing sections:`, missing.join(", "));
   process.exit(1);
 }
 
@@ -69,6 +70,21 @@ if (!/^(MINIMAL_FIX|RUNTIME_FIX|STRUCTURE_FIX|FEATURE|AUDIT)\b/m.test(mode)) {
 const classification = section("Klasyfikacja");
 if (!/^(REQUIRED|NICE_TO_HAVE|OVERBUILD)\b/m.test(classification)) {
   console.error("tasks/todo.md must select one change classification.");
+  process.exit(1);
+}
+
+const blocker = section("Priorytet / Blocker");
+const blockerMovesTask = blocker.match(/^Czy ten task rusza blocker:\s*(TAK|NIE)\s*$/mi);
+if (!/^Największy blocker teraz:\s*\S.+$/mi.test(blocker)) {
+  console.error(`${file} Priorytet / Blocker must name the current biggest blocker.`);
+  process.exit(1);
+}
+if (!blockerMovesTask) {
+  console.error(`${file} Priorytet / Blocker must include 'Czy ten task rusza blocker: TAK|NIE'.`);
+  process.exit(1);
+}
+if (blockerMovesTask[1] === "NIE" && !/^Dlaczego mimo to robimy teraz:\s*\S.+$/mi.test(blocker)) {
+  console.error(`${file} must explain why this task proceeds despite not moving the biggest blocker.`);
   process.exit(1);
 }
 
