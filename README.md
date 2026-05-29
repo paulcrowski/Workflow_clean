@@ -120,6 +120,7 @@ npm run gate:pr
 
 - task ma wypelniony formularz,
 - task wskazuje największy blocker i czy aktualna praca go rusza,
+- jeśli task nie rusza blockera, musi podać kontrolowany powód i warunek powrotu,
 - task ma aktywny status, identyfikator i swieza date,
 - zmienione pliki mieszcza sie w scope locku,
 - `audit-only` nie zmienia zadnych plikow,

@@ -104,3 +104,18 @@ Każdy task musi mieć `Priorytet / Blocker`: największy blocker teraz, czy tas
 
 ## Test / guardrail
 `scripts/check-task.js` wymaga sekcji `Priorytet / Blocker`, a `scripts/task-lifecycle.js` generuje ją dla nowych tasków.
+
+## Data
+2026-05-29
+
+## Błąd
+Samo pole `Czy ten task rusza blocker` usuwało cichy dryf, ale nadal pozwalało na słabe uzasadnienie `NIE`.
+
+## Przyczyna
+Guard nie wymagał dowodu blockera, kontrolowanego powodu odstępstwa ani warunku powrotu do głównej pracy.
+
+## Reguła zapobiegawcza
+Task musi mieć `Dowód blockera`, a dla `Czy ten task rusza blocker: NIE` musi użyć jednego z dozwolonych powodów i wskazać warunek powrotu do blockera.
+
+## Test / guardrail
+`scripts/check-task.js` waliduje dowód, kontrolowane powody `NIE`, warunek powrotu oraz blokuje drugi kolejny archived task z `NIE`.

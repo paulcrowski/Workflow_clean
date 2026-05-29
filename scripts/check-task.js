@@ -75,16 +75,44 @@ if (!/^(REQUIRED|NICE_TO_HAVE|OVERBUILD)\b/m.test(classification)) {
 
 const blocker = section("Priorytet / Blocker");
 const blockerMovesTask = blocker.match(/^Czy ten task rusza blocker:\s*(TAK|NIE)\s*$/mi);
+const blockerReason = blocker.match(/^Jeśli NIE, powód:\s*([A-Z_]+)\s*$/mi);
+const allowedBlockerReasons = new Set([
+  "BLOCKED_EXTERNAL_STATE",
+  "REQUIRED_PREREQUISITE",
+  "RISKY_WITHOUT_AUDIT",
+  "SMALL_FIX_UNBLOCKING_MAIN_WORK",
+  "NOT_APPLICABLE"
+]);
 if (!/^Największy blocker teraz:\s*\S.+$/mi.test(blocker)) {
   console.error(`${file} Priorytet / Blocker must name the current biggest blocker.`);
+  process.exit(1);
+}
+if (!/^Dowód blockera:\s*\S.+$/mi.test(blocker)) {
+  console.error(`${file} Priorytet / Blocker must include 'Dowód blockera: ...'.`);
   process.exit(1);
 }
 if (!blockerMovesTask) {
   console.error(`${file} Priorytet / Blocker must include 'Czy ten task rusza blocker: TAK|NIE'.`);
   process.exit(1);
 }
+if (!blockerReason || !allowedBlockerReasons.has(blockerReason[1])) {
+  console.error(`${file} Priorytet / Blocker must include allowed 'Jeśli NIE, powód'.`);
+  process.exit(1);
+}
+if (blockerMovesTask[1] === "TAK" && blockerReason[1] !== "NOT_APPLICABLE") {
+  console.error(`${file} must use 'Jeśli NIE, powód: NOT_APPLICABLE' when task moves the blocker.`);
+  process.exit(1);
+}
 if (blockerMovesTask[1] === "NIE" && !/^Dlaczego mimo to robimy teraz:\s*\S.+$/mi.test(blocker)) {
   console.error(`${file} must explain why this task proceeds despite not moving the biggest blocker.`);
+  process.exit(1);
+}
+if (blockerMovesTask[1] === "NIE" && !/^Warunek powrotu do blockera:\s*\S.+$/mi.test(blocker)) {
+  console.error(`${file} must include 'Warunek powrotu do blockera' when task does not move the blocker.`);
+  process.exit(1);
+}
+if (blockerMovesTask[1] === "NIE" && consecutiveNonBlockerTasks() >= 1) {
+  console.error(`${file} cannot be another task that does not move the blocker. Return to blocker or update blocker explicitly.`);
   process.exit(1);
 }
 
@@ -109,3 +137,22 @@ if (hasOverbuildClassification && /ParkingLot\.md updated:\s*NO/i.test(txt)) {
 }
 
 console.log("check:task PASS");
+
+function consecutiveNonBlockerTasks() {
+  if (process.env.CHECK_TASK_SKIP_ARCHIVE === "1") return 0;
+  const archiveDir = process.env.CHECK_TASK_ARCHIVE_DIR || "tasks/archive";
+  if (!fs.existsSync(archiveDir)) return 0;
+
+  const files = fs.readdirSync(archiveDir)
+    .filter(name => name.endsWith(".md"))
+    .map(name => `${archiveDir}/${name}`)
+    .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+  const last = files[0];
+  if (!last) return 0;
+
+  const archived = fs.readFileSync(last, "utf8");
+  const archivedBlocker = archived.match(/## Priorytet \/ Blocker\n([\s\S]*?)(?=\n## |$)/);
+  if (!archivedBlocker) return 0;
+
+  return /^Czy ten task rusza blocker:\s*NIE\s*$/mi.test(archivedBlocker[1]) ? 1 : 0;
+}

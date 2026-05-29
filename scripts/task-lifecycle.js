@@ -88,7 +88,7 @@ function render(t) {
     ["Tryb pracy", `${t.mode}\n\nUzasadnienie trybu:\nTask utworzony przez task lifecycle.`],
     ["Cel / Outcome", t.outcome],
     ["Kryteria sukcesu", `- ${t.success}`],
-    ["Priorytet / Blocker", `Największy blocker teraz: ${t.outcome}\nCzy ten task rusza blocker: TAK\nDlaczego mimo to robimy teraz: nie dotyczy`],
+    ["Priorytet / Blocker", `Największy blocker teraz: ${t.outcome}\nDowód blockera: polecenie użytkownika i aktualny task\nCzy ten task rusza blocker: TAK\nJeśli NIE, powód: NOT_APPLICABLE\nDlaczego mimo to robimy teraz: nie dotyczy\nWarunek powrotu do blockera: nie dotyczy`],
     ["Kontekst dla agenta", `Moduł: ${t.module}\nTryb zmiany: ${t.change}\nMaksymalny zakres plików: allowlista z taska\nDozwolone pliki do zmiany:\n${allowed}\nKontrakty do przeczytania: AGENTS.md, README.md\nPliki zakazane: wszystko poza allowlistą\nCzego nie ruszać: pliki poza zakresem`],
     ["Zakres", `Moduł: ${t.module}\nPliki: ${t.files}`],
     ["Reprodukcja / dowód problemu", "Task utworzony z polecenia użytkownika albo przez zamknięcie poprzedniego taska."],

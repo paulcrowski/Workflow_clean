@@ -1,6 +1,6 @@
 # Current Task
 
-Task ID: 2026-05-29-blocker-priority-guard
+Task ID: 2026-05-29-blocker-evidence-guard
 Task Date: 2026-05-29
 Task Status: ACTIVE
 
@@ -11,15 +11,18 @@ Uzasadnienie trybu:
 Task utworzony przez task lifecycle.
 
 ## Cel / Outcome
-Zablokowac dryf w latwe zielone slice'y przez jawny blocker taska
+Wzmocnic blocker guard o dowod, kontrolowany powod NIE i limit kolejnych NIE
 
 ## Kryteria sukcesu
-- Task wymaga odpowiedzi czy praca rusza najwiekszy blocker
+- check-task waliduje dowod blockera
 
 ## Priorytet / Blocker
-Największy blocker teraz: workflow nie zatrzymuje agenta przed łatwym zielonym slicem, gdy znany jest ważniejszy blocker produktu/live proof.
+Największy blocker teraz: Wzmocnic blocker guard o dowod, kontrolowany powod NIE i limit kolejnych NIE
+Dowód blockera: poprzedni guard wymagał nazwania blockera, ale nie wymagał dowodu ani kontrolowanego powodu dla NIE.
 Czy ten task rusza blocker: TAK
+Jeśli NIE, powód: NOT_APPLICABLE
 Dlaczego mimo to robimy teraz: nie dotyczy
+Warunek powrotu do blockera: nie dotyczy
 
 ## Kontekst dla agenta
 Moduł: workflow
@@ -62,9 +65,9 @@ Uzasadnienie:
 Zmiana jest wymagana dla aktualnego stanu workflow.
 
 ## Diagnoza
-Root cause: task wymagał scope i testów, ale nie wymagał odpowiedzi, czy aktualna praca rusza najważniejszy blocker.
-Dowód: agent mógł wybrać kolejny łatwy zielony slice mimo znanego blockera produktu/live proof.
-Aktualny flow: `check-task` waliduje formularz, ale przed tą zmianą nie walidował priorytetu względem blockera.
+Root cause: pierwszy blocker guard wymuszał nazwanie blockera, ale `NIE` mogło mieć dowolne słabe uzasadnienie.
+Dowód: w `scripts/check-task.js` brakowało walidacji `Dowód blockera`, kontrolowanego powodu i warunku powrotu.
+Aktualny flow: `check-task` waliduje teraz jakość pól `Priorytet / Blocker`.
 
 ## Granice
 Moduły dotknięte: workflow
@@ -78,7 +81,7 @@ ERRORS: brak dowodu, zmiana poza scope albo failujące gate'y.
 STATUSES: PASS / FAIL.
 SIDE EFFECTS: tylko zmiany w plikach z allowlisty.
 LOGS: komendy weryfikacyjne.
-TESTS: fixture z poprawnym taskiem, fixture bez `Priorytet / Blocker`, `npm run gate:local`.
+TESTS: fixture pozytywny, brak dowodu fail, zły powód fail, drugi kolejny `NIE` fail, `gate:local`.
 DONE: review ma konkretny wynik.
 
 ## Failure modes
@@ -160,16 +163,20 @@ Czy da się ograniczyć zmianę do jednego kontraktu: tak.
 
 ## Plan
 - [x] Przeczytać pliki z allowlisty.
-- [x] Dodać `Priorytet / Blocker` do template i generatora tasków.
-- [x] Dodać walidację w `check-task`.
-- [x] Zaktualizować README/AGENTS/lessons.
+- [x] Dodać `Dowód blockera`.
+- [x] Dodać kontrolowany `Jeśli NIE, powód`.
+- [x] Dodać `Warunek powrotu do blockera`.
+- [x] Dodać limit kolejnych tasków z `NIE`.
 - [x] Uruchomić weryfikację.
 
 ## Weryfikacja
 Komendy:
-`npm run task:new -- --task-file /tmp/workflow-blocker/todo.md --slug live-proof --mode MINIMAL_FIX --change-mode code-change --files src/example.js --outcome "Domknac live proof" --success "live proof PASS" --force`
-`CHECK_TASK_FILE=/tmp/workflow-blocker/todo.md node scripts/check-task.js`
-`CHECK_TASK_FILE=/tmp/workflow-blocker/no-blocker.md node scripts/check-task.js` expected FAIL
+`npm run task:new -- --task-file /tmp/workflow-blocker2/todo.md --slug blocker-proof --mode MINIMAL_FIX --change-mode code-change --files src/example.js --outcome "Domknac live proof" --success "live proof PASS" --force`
+`CHECK_TASK_FILE=/tmp/workflow-blocker2/todo.md CHECK_TASK_ARCHIVE_DIR=/tmp/workflow-blocker2/archive node scripts/check-task.js`
+`CHECK_TASK_FILE=/tmp/workflow-blocker2/no-evidence.md CHECK_TASK_ARCHIVE_DIR=/tmp/workflow-blocker2/archive node scripts/check-task.js` expected FAIL
+`CHECK_TASK_FILE=/tmp/workflow-blocker2/bad-reason.md CHECK_TASK_ARCHIVE_DIR=/tmp/workflow-blocker2/archive node scripts/check-task.js` expected FAIL
+`CHECK_TASK_FILE=/tmp/workflow-blocker2/good-no.md CHECK_TASK_ARCHIVE_DIR=/tmp/workflow-blocker2/archive node scripts/check-task.js` expected PASS
+`CHECK_TASK_FILE=/tmp/workflow-blocker2/good-no.md CHECK_TASK_ARCHIVE_DIR=/tmp/workflow-blocker2/archive node scripts/check-task.js` expected FAIL after archived previous `NIE`
 `npm run gate:local && git diff --check`
 Expected result: PASS.
 
@@ -189,8 +196,8 @@ Expected result: PASS.
 - [x] implementowano tylko REQUIRED GUARDS
 
 ## Review / Wyniki
-Co zmieniono: dodano obowiązkowy blok `Priorytet / Blocker`, walidację w `check-task`, generowanie bloku przez `task:new`, opis w README/AGENTS i lesson.
-Jak sprawdzono: fixture pozytywny, fixture bez bloku failuje, `npm run gate:local`, `git diff --check`.
+Co zmieniono: wzmocniono `Priorytet / Blocker` o dowód, kontrolowane powody `NIE`, warunek powrotu i limit drugiego kolejnego `NIE`.
+Jak sprawdzono: fixture pozytywny, brak dowodu fail, zły powód fail, pierwszy `NIE` pass, drugi kolejny `NIE` fail, `npm run gate:local`, `git diff --check`.
 PASS / FAIL: PASS
-Ryzyka: guard wymusza uczciwe nazwanie blockera, ale nadal nie oceni sam jakości uzasadnienia, jeśli agent wpisze słaby tekst.
+Ryzyka: limit kolejnych `NIE` sprawdza ostatni plik w `tasks/archive` po mtime; jeśli archiwum będzie ręcznie modyfikowane, sygnał może być mylący.
 Follow-up: brak.

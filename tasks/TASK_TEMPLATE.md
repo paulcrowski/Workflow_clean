@@ -18,8 +18,11 @@ Uzasadnienie trybu:
 
 ## Priorytet / Blocker
 Największy blocker teraz:
+Dowód blockera:
 Czy ten task rusza blocker: TAK / NIE
+Jeśli NIE, powód: BLOCKED_EXTERNAL_STATE / REQUIRED_PREREQUISITE / RISKY_WITHOUT_AUDIT / SMALL_FIX_UNBLOCKING_MAIN_WORK / NOT_APPLICABLE
 Dlaczego mimo to robimy teraz:
+Warunek powrotu do blockera:
 
 ## Kontekst dla agenta
 Moduł:

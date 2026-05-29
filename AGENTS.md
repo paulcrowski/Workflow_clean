@@ -69,10 +69,13 @@ Resztę zapisz do ParkingLot.md.
 
 Przed kolejnym slicem odpowiedz:
 - jaki jest największy blocker dla realnego domknięcia,
+- jaki jest dowód, że to blocker,
 - czy aktualny task go rusza,
-- jeśli nie, dlaczego mimo to robimy ten task teraz.
+- jeśli nie, wybierz powód: BLOCKED_EXTERNAL_STATE, REQUIRED_PREREQUISITE, RISKY_WITHOUT_AUDIT albo SMALL_FIX_UNBLOCKING_MAIN_WORK,
+- jeśli nie, wpisz warunek powrotu do blockera.
 
 Jeśli znany blocker produktu/live proof jest otwarty, nie bierz łatwego zielonego slice’a z innego obszaru, chyba że blocker jest naprawdę zablokowany zewnętrznie i zapiszesz to w tasku.
+Nie rób dwóch kolejnych tasków z `Czy ten task rusza blocker: NIE`.
 
 ## Zasady pracy
 
