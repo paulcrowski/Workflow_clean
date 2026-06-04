@@ -20,12 +20,14 @@ Jeśli brakuje danych do bezpiecznej zmiany, nie koduj. Użyj ESCALATION.
 Każdy task oznacz jako:
 
 MINIMAL_FIX - mały bugfix, max 3 pliki, max 50 LOC.
+CONTENT_FIX - copy, statyczna treść albo mały UI polish bez runtime/danych, max 3 pliki, max 80 LOC.
 RUNTIME_FIX - API, worker, parser, kolejka, cache, UI status, provider.
 STRUCTURE_FIX - duży plik, zależności, granice modułów, god file.
 FEATURE - nowa funkcja.
 AUDIT - tylko diagnoza, bez kodowania.
 
 Nie stosuj pełnej procedury do drobnego fixa, jeśli nie dotyczy runtime/danych/krytycznego flow.
+CONTENT_FIX stosuj tylko wtedy, gdy task nie dotyka API, auth, DB, workerów, providerów, danych użytkownika, security ani źródła prawdy.
 Nie omijaj pełnej procedury, jeśli task dotyczy runtime, danych, API, workerów, providerów, kontraktów albo dużych plików.
 
 ## Escalation
@@ -149,6 +151,13 @@ Dla MINIMAL_FIX:
 - dowód,
 - minimalny fix,
 - test.
+
+Dla CONTENT_FIX:
+- tryb pracy,
+- root cause,
+- dowód,
+- minimalny fix,
+- test albo visual/render proof, jeśli dotyczy UI.
 
 Dla RUNTIME_FIX / STRUCTURE_FIX / FEATURE:
 - tryb pracy,

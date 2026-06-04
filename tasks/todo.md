@@ -1,7 +1,7 @@
 # Current Task
 
-Task ID: 2026-05-29-blocker-evidence-guard
-Task Date: 2026-05-29
+Task ID: 2026-06-04-content-fix-mode
+Task Date: 2026-06-04
 Task Status: ACTIVE
 
 ## Tryb pracy
@@ -11,14 +11,16 @@ Uzasadnienie trybu:
 Task utworzony przez task lifecycle.
 
 ## Cel / Outcome
-Wzmocnic blocker guard o dowod, kontrolowany powod NIE i limit kolejnych NIE
+Dodac lekki CONTENT_FIX dla copy i statycznych UI zmian bez oslabiania runtime guardow
 
 ## Kryteria sukcesu
-- check-task waliduje dowod blockera
+- CONTENT_FIX ma osobne limity 3 pliki / 80 LOC.
+- task:new, check-task i check-diff-size akceptuja CONTENT_FIX.
+- README i AGENTS.md jasno mowia, kiedy wolno uzyc CONTENT_FIX, a kiedy trzeba zostac przy runtime guardach.
 
 ## Priorytet / Blocker
-Największy blocker teraz: Wzmocnic blocker guard o dowod, kontrolowany powod NIE i limit kolejnych NIE
-Dowód blockera: poprzedni guard wymagał nazwania blockera, ale nie wymagał dowodu ani kontrolowanego powodu dla NIE.
+Największy blocker teraz: Dodac lekki CONTENT_FIX dla copy i statycznych UI zmian bez oslabiania runtime guardow
+Dowód blockera: polecenie użytkownika i aktualny task
 Czy ten task rusza blocker: TAK
 Jeśli NIE, powód: NOT_APPLICABLE
 Dlaczego mimo to robimy teraz: nie dotyczy
@@ -35,6 +37,7 @@ Dozwolone pliki do zmiany:
 - tasks/todo.md
 - tasks/lessons.md
 - scripts/check-task.js
+- scripts/check-diff-size.js
 - scripts/task-lifecycle.js
 - tasks/archive/**
 Kontrakty do przeczytania: AGENTS.md, README.md
@@ -43,10 +46,10 @@ Czego nie ruszać: pliki poza zakresem
 
 ## Zakres
 Moduł: workflow
-Pliki: AGENTS.md, README.md, tasks/TASK_TEMPLATE.md, tasks/todo.md, tasks/lessons.md, scripts/check-task.js, scripts/task-lifecycle.js
+Pliki: AGENTS.md, README.md, tasks/TASK_TEMPLATE.md, tasks/todo.md, tasks/lessons.md, scripts/check-task.js, scripts/check-diff-size.js, scripts/task-lifecycle.js
 
 ## Reprodukcja / dowód problemu
-Task utworzony z polecenia użytkownika albo przez zamknięcie poprzedniego taska.
+Uzytkownik wskazal, ze obecny workflow jest slusznie ostrozny, ale dla prostych zmian tresci/statycznego UI moze byc zbyt ciezki. Wczesniej tryby pracy nie mialy osobnego lekkiego trybu miedzy MINIMAL_FIX a pelnym FEATURE/RUNTIME_FIX.
 
 ## Escalation
 Czy brakuje danych do bezpiecznej zmiany?
@@ -65,13 +68,13 @@ Uzasadnienie:
 Zmiana jest wymagana dla aktualnego stanu workflow.
 
 ## Diagnoza
-Root cause: pierwszy blocker guard wymuszał nazwanie blockera, ale `NIE` mogło mieć dowolne słabe uzasadnienie.
-Dowód: w `scripts/check-task.js` brakowało walidacji `Dowód blockera`, kontrolowanego powodu i warunku powrotu.
-Aktualny flow: `check-task` waliduje teraz jakość pól `Priorytet / Blocker`.
+Root cause: brak osobnego trybu dla copy i statycznego UI powodowal, ze male tresciowe zmiany musialy wpasc w ogolny fix albo pelniejszy feature/runtime flow.
+Dowód: AGENTS.md, TASK_TEMPLATE.md i skrypty walidacyjne nie znaly CONTENT_FIX przed ta zmiana.
+Aktualny flow: agent wybieral MINIMAL_FIX albo FEATURE/RUNTIME_FIX; brakowalo mechanicznego limitu 3 pliki / 80 LOC dla content polish.
 
 ## Granice
 Moduły dotknięte: workflow
-Kontrakty dotknięte: format `tasks/todo.md`.
+Kontrakty dotknięte: tryby pracy taska, walidacja taska, limit diffu, task lifecycle, README.
 Poza zakresem: wszystko poza allowlistą.
 
 ## Kontrakt
@@ -81,7 +84,7 @@ ERRORS: brak dowodu, zmiana poza scope albo failujące gate'y.
 STATUSES: PASS / FAIL.
 SIDE EFFECTS: tylko zmiany w plikach z allowlisty.
 LOGS: komendy weryfikacyjne.
-TESTS: fixture pozytywny, brak dowodu fail, zły powód fail, drugi kolejny `NIE` fail, `gate:local`.
+TESTS: task:new CONTENT_FIX, check-task CONTENT_FIX, check-diff-size positive/negative, gate:local.
 DONE: review ma konkretny wynik.
 
 ## Failure modes
@@ -163,26 +166,24 @@ Czy da się ograniczyć zmianę do jednego kontraktu: tak.
 
 ## Plan
 - [x] Przeczytać pliki z allowlisty.
-- [x] Dodać `Dowód blockera`.
-- [x] Dodać kontrolowany `Jeśli NIE, powód`.
-- [x] Dodać `Warunek powrotu do blockera`.
-- [x] Dodać limit kolejnych tasków z `NIE`.
-- [x] Uruchomić weryfikację.
+- [x] Dodac CONTENT_FIX do instrukcji, template'u i dokumentacji.
+- [x] Dodac CONTENT_FIX do task lifecycle, check-task i check-diff-size.
+- [x] Uruchomić weryfikację pozytywna i negatywna.
 
 ## Weryfikacja
 Komendy:
-`npm run task:new -- --task-file /tmp/workflow-blocker2/todo.md --slug blocker-proof --mode MINIMAL_FIX --change-mode code-change --files src/example.js --outcome "Domknac live proof" --success "live proof PASS" --force`
-`CHECK_TASK_FILE=/tmp/workflow-blocker2/todo.md CHECK_TASK_ARCHIVE_DIR=/tmp/workflow-blocker2/archive node scripts/check-task.js`
-`CHECK_TASK_FILE=/tmp/workflow-blocker2/no-evidence.md CHECK_TASK_ARCHIVE_DIR=/tmp/workflow-blocker2/archive node scripts/check-task.js` expected FAIL
-`CHECK_TASK_FILE=/tmp/workflow-blocker2/bad-reason.md CHECK_TASK_ARCHIVE_DIR=/tmp/workflow-blocker2/archive node scripts/check-task.js` expected FAIL
-`CHECK_TASK_FILE=/tmp/workflow-blocker2/good-no.md CHECK_TASK_ARCHIVE_DIR=/tmp/workflow-blocker2/archive node scripts/check-task.js` expected PASS
-`CHECK_TASK_FILE=/tmp/workflow-blocker2/good-no.md CHECK_TASK_ARCHIVE_DIR=/tmp/workflow-blocker2/archive node scripts/check-task.js` expected FAIL after archived previous `NIE`
-`npm run gate:local && git diff --check`
+`npm run task:new -- --task-file /tmp/workflow-content/todo.md --slug copy-polish --mode CONTENT_FIX --change-mode code-change --files src/home.ts --outcome "Poprawic copy landingu" --success "copy proof PASS" --force`
+`CHECK_TASK_FILE=/tmp/workflow-content/todo.md CHECK_TASK_ARCHIVE_DIR=/tmp/workflow-content/archive node scripts/check-task.js`
+`CHECK_DIFF_TASK_FILE=/tmp/workflow-content-diff/todo.md CHECK_DIFF_NUMSTAT=$'40\t39\tsrc/home.ts' node scripts/check-diff-size.js`
+`CHECK_DIFF_TASK_FILE=/tmp/workflow-content-fail/todo.md CHECK_DIFF_NUMSTAT=$'41\t40\tsrc/home.ts' node scripts/check-diff-size.js; test $? -ne 0`
+`CHECK_DIFF_TASK_FILE=/tmp/workflow-content-filefail/todo.md CHECK_DIFF_NUMSTAT=$'1\t0\ta.ts\n1\t0\tb.ts\n1\t0\tc.ts\n1\t0\td.ts' node scripts/check-diff-size.js; test $? -ne 0`
+`npm run gate:local`
+`git diff --check`
 Expected result: PASS.
 
 ## Definition of Done
 - [x] test PASS
-- [x] build NOT_NEEDED, workflow scripts
+- [x] build PASS albo NOT_NEEDED z uzasadnieniem
 - [x] brak ERROR w logach
 - [x] zmiana nie wychodzi poza zakres
 - [x] brak refaktoru przy okazji
@@ -196,8 +197,8 @@ Expected result: PASS.
 - [x] implementowano tylko REQUIRED GUARDS
 
 ## Review / Wyniki
-Co zmieniono: wzmocniono `Priorytet / Blocker` o dowód, kontrolowane powody `NIE`, warunek powrotu i limit drugiego kolejnego `NIE`.
-Jak sprawdzono: fixture pozytywny, brak dowodu fail, zły powód fail, pierwszy `NIE` pass, drugi kolejny `NIE` fail, `npm run gate:local`, `git diff --check`.
+Co zmieniono: dodano CONTENT_FIX do instrukcji workflow, README, task template, task lifecycle, check-task, check-diff-size i lessons.
+Jak sprawdzono: task:new CONTENT_FIX PASS, check-task PASS, check-diff-size PASS dla 79/80, negatywne testy failuja dla 81/80 i 4 plikow, npm run gate:local PASS, git diff --check PASS.
 PASS / FAIL: PASS
-Ryzyka: limit kolejnych `NIE` sprawdza ostatni plik w `tasks/archive` po mtime; jeśli archiwum będzie ręcznie modyfikowane, sygnał może być mylący.
+Ryzyka: CONTENT_FIX nadal wymaga rozsadnej klasyfikacji; nie wolno go uzywac dla runtime, auth, danych, providerow ani kanonicznych statusow.
 Follow-up: brak.

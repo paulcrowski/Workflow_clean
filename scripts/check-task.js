@@ -39,7 +39,7 @@ if (missing.length) {
 
 const placeholderPatterns = [
   /^\s*\.\.\.\s*$/m,
-  /MINIMAL_FIX \/ RUNTIME_FIX \/ STRUCTURE_FIX \/ FEATURE \/ AUDIT:/,
+  /MINIMAL_FIX \/ CONTENT_FIX \/ RUNTIME_FIX \/ STRUCTURE_FIX \/ FEATURE \/ AUDIT:/,
   /Tryb zmiany:\s*code-change \/ audit-only \/ release-build/,
   /REQUIRED \/ NICE_TO_HAVE \/ OVERBUILD:/,
   /TAK \/ NIE/,
@@ -62,7 +62,7 @@ function section(name) {
 }
 
 const mode = section("Tryb pracy");
-if (!/^(MINIMAL_FIX|RUNTIME_FIX|STRUCTURE_FIX|FEATURE|AUDIT)\b/m.test(mode)) {
+if (!/^(MINIMAL_FIX|CONTENT_FIX|RUNTIME_FIX|STRUCTURE_FIX|FEATURE|AUDIT)\b/m.test(mode)) {
   console.error("tasks/todo.md must select one work mode.");
   process.exit(1);
 }

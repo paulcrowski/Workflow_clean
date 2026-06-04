@@ -119,3 +119,18 @@ Task musi mieć `Dowód blockera`, a dla `Czy ten task rusza blocker: NIE` musi 
 
 ## Test / guardrail
 `scripts/check-task.js` waliduje dowód, kontrolowane powody `NIE`, warunek powrotu oraz blokuje drugi kolejny archived task z `NIE`.
+
+## Data
+2026-06-04
+
+## Błąd
+Runtime-grade workflow byl zbyt ciezki dla prostych zmian copy i statycznego UI, co moglo zachecac agenta do przepalania czasu na guardy niezwiazane z ryzykiem taska.
+
+## Przyczyna
+Workflow mial `MINIMAL_FIX` i pelne tryby runtime/feature, ale brakowalo osobnego lekkiego trybu dla tresci i UI polish bez danych, providerow, auth ani zrodla prawdy.
+
+## Reguła zapobiegawcza
+Uzywaj `CONTENT_FIX` tylko dla copy, statycznej tresci i malego UI polish. Jesli task dotyka API, auth, DB, workerow, providerow, security, danych uzytkownika albo kanonicznego statusu, wraca do runtime/structure/feature guardow.
+
+## Test / guardrail
+`scripts/task-lifecycle.js`, `scripts/check-task.js` i `scripts/check-diff-size.js` znaja `CONTENT_FIX`; limit diffu to 3 liczone pliki / 80 liczonych linii.

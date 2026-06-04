@@ -13,6 +13,7 @@ Cel jest prosty: agent ma robic jedna potrzebna zmiane, w dozwolonych plikach, z
 - za duzy diff dla malego fixa,
 - happy-path-only coding bez terminal states, retry policy i failure modes,
 - audit, ktory po cichu zmienia pliki,
+- traktowanie prostego copy/statycznego UI jak runtime taska,
 - aplikacje bez realnych `lint/typecheck/test/build`,
 - importy lamiace granice warstw.
 
@@ -28,6 +29,7 @@ Mocne strony:
 - task musi mówić, czy rusza największy blocker,
 - agent moze tworzyc i zamykac taski komendami `task:new` / `task:close`,
 - male fixy maja twarde limity diffu,
+- proste copy/statyczne UI ma lekki tryb `CONTENT_FIX`,
 - runtime/data/UI taski maja failure-first checklist,
 - po dodaniu aplikacji workflow wymaga realnych `lint/typecheck/test/build`,
 - import boundaries sa sprawdzane przez konfig w repo.
@@ -132,9 +134,12 @@ npm run gate:pr
 
 `scripts/check-diff-size.js` czyta `## Tryb pracy` z `tasks/todo.md`.
 
+`CONTENT_FIX` jest dla malych zmian w copy, statycznej tresci albo prostym UI polish. Nie uzywaj go dla API, auth, DB, workerow, providerow, security, danych uzytkownika ani statusow bedacych zrodlem prawdy.
+
 | Tryb pracy | Liczone pliki | Liczone linie |
 | --- | ---: | ---: |
 | `MINIMAL_FIX` | 3 | 50 |
+| `CONTENT_FIX` | 3 | 80 |
 | `RUNTIME_FIX` | 12 | 250 |
 | `STRUCTURE_FIX` | 12 | 250 |
 | `FEATURE` | 12 | 250 |

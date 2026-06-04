@@ -17,6 +17,7 @@ const args = diffArgs();
 const taskFile = process.env.CHECK_DIFF_TASK_FILE || "tasks/todo.md";
 const modeLimits = {
   MINIMAL_FIX: { files: 3, lines: 50 },
+  CONTENT_FIX: { files: 3, lines: 80 },
   RUNTIME_FIX: { files: 12, lines: 250 },
   STRUCTURE_FIX: { files: 12, lines: 250 },
   FEATURE: { files: 12, lines: 250 },
@@ -170,7 +171,7 @@ function workMode() {
   }
 
   const txt = fs.readFileSync(taskFile, "utf8");
-  const match = txt.match(/## Tryb pracy\s*\n\s*(MINIMAL_FIX|RUNTIME_FIX|STRUCTURE_FIX|FEATURE|AUDIT)\b/);
+  const match = txt.match(/## Tryb pracy\s*\n\s*(MINIMAL_FIX|CONTENT_FIX|RUNTIME_FIX|STRUCTURE_FIX|FEATURE|AUDIT)\b/);
 
   if (!match) {
     console.error(`${taskFile} must select one work mode before checking diff size.`);

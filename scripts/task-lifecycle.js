@@ -21,7 +21,7 @@ function taskNew(a) {
   const files = list(a.files);
 
   must(slug, "task:new", "Missing --slug.");
-  oneOf(mode, ["MINIMAL_FIX", "RUNTIME_FIX", "STRUCTURE_FIX", "FEATURE", "AUDIT"], "task:new", "--mode");
+  oneOf(mode, ["MINIMAL_FIX", "CONTENT_FIX", "RUNTIME_FIX", "STRUCTURE_FIX", "FEATURE", "AUDIT"], "task:new", "--mode");
   oneOf(change, ["code-change", "audit-only", "release-build"], "task:new", "--change-mode");
   oneOf(klass, ["REQUIRED", "NICE_TO_HAVE", "OVERBUILD"], "task:new", "--classification");
   if (change !== "audit-only" && files.length === 0) die("task:new", "Missing --files for code-changing task.");
