@@ -52,6 +52,9 @@ Presetow nie warto dodawac na slepo. Dodaj je dopiero, gdy konfiguracja nowego s
 Ty dalej mowisz normalnie: "zrob X". Codex pod spodem moze uzyc tych komend, zeby nie przepisywac taska recznie.
 Nie wypelniasz taska sam. Agent wybiera najmniejszy bezpieczny tryb pracy i odpala `task:new`.
 
+Dokladniej:
+[docs/TASK_LIFECYCLE.md](docs/TASK_LIFECYCLE.md)
+
 `task:new` generuje rozny formularz zależnie od trybu:
 - `MINIMAL_FIX` i `CONTENT_FIX`: krotki task, tylko root cause, dowod, minimalny fix i weryfikacja,
 - `AUDIT`: krotki task diagnostyczny bez kodowania,
