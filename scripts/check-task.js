@@ -9,26 +9,60 @@ if (!fs.existsSync(file)) {
 
 const txt = fs.readFileSync(file, "utf8");
 
-const required = [
+const mode = workMode(txt);
+const requiredCommon = [
   "## Tryb pracy",
   "## Cel / Outcome",
   "## Kryteria sukcesu",
   "## Priorytet / Blocker",
   "## Kontekst dla agenta",
   "## Zakres",
-  "## Reprodukcja / dowód problemu",
   "## Escalation",
   "## Klasyfikacja",
   "## Diagnoza",
-  "## Granice",
-  "## Kontrakt",
-  "## Failure modes",
-  "## Guard Scope",
   "## Plan",
   "## Weryfikacja",
-  "## Definition of Done",
   "## Review / Wyniki"
 ];
+const requiredByMode = {
+  MINIMAL_FIX: requiredCommon,
+  CONTENT_FIX: requiredCommon,
+  AUDIT: [
+    ...requiredCommon.filter(name => name !== "## Diagnoza" && name !== "## Plan"),
+    "## Fakty",
+    "## Dowody",
+    "## Ryzyka",
+    "## Plan naprawczy"
+  ],
+  RUNTIME_FIX: [
+    ...requiredCommon,
+    "## Reprodukcja / dowód problemu",
+    "## Granice",
+    "## Kontrakt",
+    "## Failure modes",
+    "## Guard Scope",
+    "## Definition of Done"
+  ],
+  STRUCTURE_FIX: [
+    ...requiredCommon,
+    "## Reprodukcja / dowód problemu",
+    "## Granice",
+    "## Kontrakt",
+    "## Failure modes",
+    "## Guard Scope",
+    "## Definition of Done"
+  ],
+  FEATURE: [
+    ...requiredCommon,
+    "## Reprodukcja / dowód problemu",
+    "## Granice",
+    "## Kontrakt",
+    "## Failure modes",
+    "## Guard Scope",
+    "## Definition of Done"
+  ]
+};
+const required = requiredByMode[mode];
 
 const missing = required.filter(x => !txt.includes(x));
 
@@ -59,12 +93,6 @@ for (const pattern of placeholderPatterns) {
 function section(name) {
   const match = txt.match(new RegExp(`## ${name}\\n([\\s\\S]*?)(?=\\n## |$)`));
   return match ? match[1].trim() : "";
-}
-
-const mode = section("Tryb pracy");
-if (!/^(MINIMAL_FIX|CONTENT_FIX|RUNTIME_FIX|STRUCTURE_FIX|FEATURE|AUDIT)\b/m.test(mode)) {
-  console.error("tasks/todo.md must select one work mode.");
-  process.exit(1);
 }
 
 const classification = section("Klasyfikacja");
@@ -137,6 +165,15 @@ if (hasOverbuildClassification && /ParkingLot\.md updated:\s*NO/i.test(txt)) {
 }
 
 console.log("check:task PASS");
+
+function workMode(body) {
+  const match = body.match(/## Tryb pracy\s*\n\s*(MINIMAL_FIX|CONTENT_FIX|RUNTIME_FIX|STRUCTURE_FIX|FEATURE|AUDIT)\b/);
+  if (!match) {
+    console.error("tasks/todo.md must select one work mode.");
+    process.exit(1);
+  }
+  return match[1];
+}
 
 function consecutiveNonBlockerTasks() {
   if (process.env.CHECK_TASK_SKIP_ARCHIVE === "1") return 0;

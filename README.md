@@ -50,6 +50,12 @@ Presetow nie warto dodawac na slepo. Dodaj je dopiero, gdy konfiguracja nowego s
 ## Task lifecycle dla Codexa
 
 Ty dalej mowisz normalnie: "zrob X". Codex pod spodem moze uzyc tych komend, zeby nie przepisywac taska recznie.
+Nie wypelniasz taska sam. Agent wybiera najmniejszy bezpieczny tryb pracy i odpala `task:new`.
+
+`task:new` generuje rozny formularz zależnie od trybu:
+- `MINIMAL_FIX` i `CONTENT_FIX`: krotki task, tylko root cause, dowod, minimalny fix i weryfikacja,
+- `AUDIT`: krotki task diagnostyczny bez kodowania,
+- `RUNTIME_FIX`, `STRUCTURE_FIX`, `FEATURE`: pelny formularz z kontraktem, failure modes i guardami.
 
 Nowy task:
 
@@ -61,7 +67,8 @@ Co to robi:
 - tworzy swiezy `tasks/todo.md`,
 - ustawia date, task ID, tryb pracy i scope,
 - dopisuje allowliste plikow,
-- zostawia miejsce na root cause, testy i dowod.
+- dobiera dlugosc formularza do ryzyka taska,
+- zostawia miejsce na root cause, testy i dowod bez recznej pracy uzytkownika.
 
 Zamkniecie taska:
 
@@ -86,7 +93,7 @@ npm install
 npm run hooks:install
 ```
 
-3. Utworz realny task komenda `npm run task:new -- --slug ... --files ...`.
+3. Pracuj przez agenta albo utworz realny task komenda `npm run task:new -- --slug ... --files ...`.
 4. W `tasks/todo.md` ustaw:
    - `Task ID`, `Task Date` i `Task Status: ACTIVE`,
    - `Tryb zmiany: code-change`, `audit-only` albo `release-build`,
@@ -120,7 +127,7 @@ npm run gate:pr
 
 `gate:local` i `gate:pr` sprawdzaja:
 
-- task ma wypelniony formularz,
+- task ma wypelniony formularz wymagany dla wybranego trybu pracy,
 - task wskazuje największy blocker i czy aktualna praca go rusza,
 - jeśli task nie rusza blockera, musi podać kontrolowany powód i warunek powrotu,
 - task ma aktywny status, identyfikator i swieza date,

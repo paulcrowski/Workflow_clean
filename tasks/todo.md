@@ -1,6 +1,6 @@
 # Current Task
 
-Task ID: 2026-06-04-content-fix-mode
+Task ID: 2026-06-04-mode-aware-task-templates
 Task Date: 2026-06-04
 Task Status: ACTIVE
 
@@ -11,15 +11,15 @@ Uzasadnienie trybu:
 Task utworzony przez task lifecycle.
 
 ## Cel / Outcome
-Dodac lekki CONTENT_FIX dla copy i statycznych UI zmian bez oslabiania runtime guardow
+Zmniejszyc spalanie tokenow przez krotkie taski per tryb, bez recznego wypelniania przez uzytkownika
 
 ## Kryteria sukcesu
-- CONTENT_FIX ma osobne limity 3 pliki / 80 LOC.
-- task:new, check-task i check-diff-size akceptuja CONTENT_FIX.
-- README i AGENTS.md jasno mowia, kiedy wolno uzyc CONTENT_FIX, a kiedy trzeba zostac przy runtime guardach.
+- task:new generuje krotkie taski dla MINIMAL_FIX/CONTENT_FIX/AUDIT i pelne taski dla runtime/structure/feature
+- check-task waliduje wymagane sekcje zależnie od trybu pracy.
+- uzytkownik nie musi wypelniac taska recznie; to jest obowiazek agenta.
 
 ## Priorytet / Blocker
-Największy blocker teraz: Dodac lekki CONTENT_FIX dla copy i statycznych UI zmian bez oslabiania runtime guardow
+Największy blocker teraz: Zmniejszyc spalanie tokenow przez krotkie taski per tryb, bez recznego wypelniania przez uzytkownika
 Dowód blockera: polecenie użytkownika i aktualny task
 Czy ten task rusza blocker: TAK
 Jeśli NIE, powód: NOT_APPLICABLE
@@ -33,11 +33,9 @@ Maksymalny zakres plików: allowlista z taska
 Dozwolone pliki do zmiany:
 - AGENTS.md
 - README.md
-- tasks/TASK_TEMPLATE.md
 - tasks/todo.md
 - tasks/lessons.md
 - scripts/check-task.js
-- scripts/check-diff-size.js
 - scripts/task-lifecycle.js
 - tasks/archive/**
 Kontrakty do przeczytania: AGENTS.md, README.md
@@ -46,10 +44,10 @@ Czego nie ruszać: pliki poza zakresem
 
 ## Zakres
 Moduł: workflow
-Pliki: AGENTS.md, README.md, tasks/TASK_TEMPLATE.md, tasks/todo.md, tasks/lessons.md, scripts/check-task.js, scripts/check-diff-size.js, scripts/task-lifecycle.js
+Pliki: AGENTS.md, README.md, tasks/todo.md, tasks/lessons.md, scripts/check-task.js, scripts/task-lifecycle.js
 
 ## Reprodukcja / dowód problemu
-Uzytkownik wskazal, ze obecny workflow jest slusznie ostrozny, ale dla prostych zmian tresci/statycznego UI moze byc zbyt ciezki. Wczesniej tryby pracy nie mialy osobnego lekkiego trybu miedzy MINIMAL_FIX a pelnym FEATURE/RUNTIME_FIX.
+Obecny `task:new` generowal jeden duzy formularz dla kazdego trybu. To dawalo dobra jakosc, ale lekkie taski placily tokenowo za sekcje runtime, ktorych nie potrzebuja.
 
 ## Escalation
 Czy brakuje danych do bezpiecznej zmiany?
@@ -68,13 +66,13 @@ Uzasadnienie:
 Zmiana jest wymagana dla aktualnego stanu workflow.
 
 ## Diagnoza
-Root cause: brak osobnego trybu dla copy i statycznego UI powodowal, ze male tresciowe zmiany musialy wpasc w ogolny fix albo pelniejszy feature/runtime flow.
-Dowód: AGENTS.md, TASK_TEMPLATE.md i skrypty walidacyjne nie znaly CONTENT_FIX przed ta zmiana.
-Aktualny flow: agent wybieral MINIMAL_FIX albo FEATURE/RUNTIME_FIX; brakowalo mechanicznego limitu 3 pliki / 80 LOC dla content polish.
+Root cause: generator taskow nie rozroznial ryzyka trybu pracy, a walidator wymagal pelnego formularza nawet dla lekkich trybow.
+Dowód: `scripts/task-lifecycle.js` mial jeden `render()`, a `scripts/check-task.js` mial jedna liste wymaganych sekcji.
+Aktualny flow: agent tworzy task przez `task:new`; po zmianie formularz zalezy od trybu pracy.
 
 ## Granice
 Moduły dotknięte: workflow
-Kontrakty dotknięte: tryby pracy taska, walidacja taska, limit diffu, task lifecycle, README.
+Kontrakty dotknięte: task lifecycle, check-task, AGENTS.md, README.md, lessons.
 Poza zakresem: wszystko poza allowlistą.
 
 ## Kontrakt
@@ -84,7 +82,7 @@ ERRORS: brak dowodu, zmiana poza scope albo failujące gate'y.
 STATUSES: PASS / FAIL.
 SIDE EFFECTS: tylko zmiany w plikach z allowlisty.
 LOGS: komendy weryfikacyjne.
-TESTS: task:new CONTENT_FIX, check-task CONTENT_FIX, check-diff-size positive/negative, gate:local.
+TESTS: fixture task:new dla MINIMAL_FIX, CONTENT_FIX, AUDIT i RUNTIME_FIX; check-task; gate:local; git diff --check.
 DONE: review ma konkretny wynik.
 
 ## Failure modes
@@ -166,17 +164,24 @@ Czy da się ograniczyć zmianę do jednego kontraktu: tak.
 
 ## Plan
 - [x] Przeczytać pliki z allowlisty.
-- [x] Dodac CONTENT_FIX do instrukcji, template'u i dokumentacji.
-- [x] Dodac CONTENT_FIX do task lifecycle, check-task i check-diff-size.
-- [x] Uruchomić weryfikację pozytywna i negatywna.
+- [x] Dodać mode-aware renderowanie taskow.
+- [x] Dodać mode-aware wymagane sekcje w check-task.
+- [x] Zaktualizować AGENTS.md, README.md i lessons.
+- [x] Uruchomić weryfikację.
 
 ## Weryfikacja
 Komendy:
-`npm run task:new -- --task-file /tmp/workflow-content/todo.md --slug copy-polish --mode CONTENT_FIX --change-mode code-change --files src/home.ts --outcome "Poprawic copy landingu" --success "copy proof PASS" --force`
-`CHECK_TASK_FILE=/tmp/workflow-content/todo.md CHECK_TASK_ARCHIVE_DIR=/tmp/workflow-content/archive node scripts/check-task.js`
-`CHECK_DIFF_TASK_FILE=/tmp/workflow-content-diff/todo.md CHECK_DIFF_NUMSTAT=$'40\t39\tsrc/home.ts' node scripts/check-diff-size.js`
-`CHECK_DIFF_TASK_FILE=/tmp/workflow-content-fail/todo.md CHECK_DIFF_NUMSTAT=$'41\t40\tsrc/home.ts' node scripts/check-diff-size.js; test $? -ne 0`
-`CHECK_DIFF_TASK_FILE=/tmp/workflow-content-filefail/todo.md CHECK_DIFF_NUMSTAT=$'1\t0\ta.ts\n1\t0\tb.ts\n1\t0\tc.ts\n1\t0\td.ts' node scripts/check-diff-size.js; test $? -ne 0`
+`npm run task:new -- --task-file /tmp/workflow-mode-aware/minimal.md --slug tiny-fix --mode MINIMAL_FIX --files src/a.js --outcome "Naprawic literowke" --success "proof PASS" --force`
+`CHECK_TASK_FILE=/tmp/workflow-mode-aware/minimal.md CHECK_TASK_ARCHIVE_DIR=/tmp/workflow-mode-aware/archive node scripts/check-task.js`
+`test -z "$(rg '^## Failure modes$|^## Kontrakt$|^## Guard Scope$' /tmp/workflow-mode-aware/minimal.md || true)"`
+`npm run task:new -- --task-file /tmp/workflow-mode-aware-content/content.md --slug copy-polish --mode CONTENT_FIX --files src/page.tsx --outcome "Poprawic copy" --success "visual proof PASS" --force`
+`CHECK_TASK_FILE=/tmp/workflow-mode-aware-content/content.md CHECK_TASK_ARCHIVE_DIR=/tmp/workflow-mode-aware-content/archive node scripts/check-task.js`
+`npm run task:new -- --task-file /tmp/workflow-mode-aware-audit/audit.md --slug inspect-flow --mode AUDIT --outcome "Sprawdzic flow" --success "audit PASS" --force`
+`CHECK_TASK_FILE=/tmp/workflow-mode-aware-audit/audit.md CHECK_TASK_ARCHIVE_DIR=/tmp/workflow-mode-aware-audit/archive node scripts/check-task.js`
+`rg '^Tryb zmiany: audit-only$|^## Fakty$|^## Plan naprawczy$' /tmp/workflow-mode-aware-audit/audit.md`
+`npm run task:new -- --task-file /tmp/workflow-mode-aware-runtime/runtime.md --slug api-fix --mode RUNTIME_FIX --files src/api.ts --outcome "Naprawic API" --success "runtime proof PASS" --force`
+`CHECK_TASK_FILE=/tmp/workflow-mode-aware-runtime/runtime.md CHECK_TASK_ARCHIVE_DIR=/tmp/workflow-mode-aware-runtime/archive node scripts/check-task.js`
+`rg '^## Failure modes$|^## Kontrakt$|^## Guard Scope$' /tmp/workflow-mode-aware-runtime/runtime.md`
 `npm run gate:local`
 `git diff --check`
 Expected result: PASS.
@@ -197,8 +202,8 @@ Expected result: PASS.
 - [x] implementowano tylko REQUIRED GUARDS
 
 ## Review / Wyniki
-Co zmieniono: dodano CONTENT_FIX do instrukcji workflow, README, task template, task lifecycle, check-task, check-diff-size i lessons.
-Jak sprawdzono: task:new CONTENT_FIX PASS, check-task PASS, check-diff-size PASS dla 79/80, negatywne testy failuja dla 81/80 i 4 plikow, npm run gate:local PASS, git diff --check PASS.
+Co zmieniono: `task:new` generuje krotkie formularze dla MINIMAL_FIX/CONTENT_FIX/AUDIT i pelne formularze dla RUNTIME_FIX/STRUCTURE_FIX/FEATURE; `check-task` waliduje sekcje per tryb; README/AGENTS wyjasniaja, ze task lifecycle jest obowiazkiem agenta.
+Jak sprawdzono: fixtures dla MINIMAL_FIX, CONTENT_FIX, AUDIT i RUNTIME_FIX przeszly check-task; lekkie taski nie maja runtime sekcji; AUDIT domyslnie ma audit-only; RUNTIME_FIX zachowuje kontrakt/failure modes/guard scope.
 PASS / FAIL: PASS
-Ryzyka: CONTENT_FIX nadal wymaga rozsadnej klasyfikacji; nie wolno go uzywac dla runtime, auth, danych, providerow ani kanonicznych statusow.
+Ryzyka: oszczednosc tokenow zalezy od tego, czy agent poprawnie wybierze lekki tryb; runtime i dane nadal musza isc pelnym trybem.
 Follow-up: brak.

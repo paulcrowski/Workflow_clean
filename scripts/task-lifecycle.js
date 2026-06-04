@@ -16,7 +16,7 @@ function taskNew(a) {
   const date = a.date || today();
   const slug = slugify(a.slug || a._[0]);
   const mode = up(a.mode || "MINIMAL_FIX");
-  const change = a["change-mode"] || "code-change";
+  const change = a["change-mode"] || (mode === "AUDIT" ? "audit-only" : "code-change");
   const klass = up(a.classification || "REQUIRED");
   const files = list(a.files);
 
@@ -83,6 +83,12 @@ function taskClose(a) {
 }
 
 function render(t) {
+  if (["MINIMAL_FIX", "CONTENT_FIX"].includes(t.mode)) return renderLight(t);
+  if (t.mode === "AUDIT") return renderAudit(t);
+  return renderFull(t);
+}
+
+function renderFull(t) {
   const allowed = t.allowed.map(x => `- ${x}`).join("\n");
   const sections = [
     ["Tryb pracy", `${t.mode}\n\nUzasadnienie trybu:\nTask utworzony przez task lifecycle.`],
@@ -108,6 +114,49 @@ function render(t) {
     ["Weryfikacja", "Komendy:\ndo uzupełnienia\nExpected result: PASS."],
     ["Definition of Done", "- [ ] test PASS\n- [ ] build PASS albo NOT_NEEDED z uzasadnieniem\n- [ ] brak ERROR w logach\n- [ ] zmiana nie wychodzi poza zakres\n- [ ] brak refaktoru przy okazji\n- [ ] failure modes obsłużone\n- [ ] brak silent fallbacków\n- [ ] brak empty success\n- [ ] UI truth zachowane, jeśli dotyczy\n- [ ] dependency direction zachowany\n- [ ] brak cyklicznych zależności\n- [ ] duże pliki nie zostały powiększone bez uzasadnienia\n- [ ] implementowano tylko REQUIRED GUARDS"],
     ["Review / Wyniki", `Co zmieniono: nie zakończono.\nJak sprawdzono: nie uruchomiono jeszcze.\nPASS / FAIL: ${t.review}\nRyzyka: brak finalnej weryfikacji.\nFollow-up: brak.`]
+  ];
+  return `# Current Task\n\nTask ID: ${t.id}\nTask Date: ${t.date}\nTask Status: ACTIVE\n\n${sections.map(s => `## ${s[0]}\n${s[1]}`).join("\n\n")}\n`;
+}
+
+function renderLight(t) {
+  const allowed = t.allowed.map(x => `- ${x}`).join("\n");
+  const proof = t.mode === "CONTENT_FIX"
+    ? "Test: komenda albo visual/render proof dobrany przez agenta."
+    : "Test: najmniejsza komenda potwierdzajaca fix.";
+  const sections = [
+    ["Tryb pracy", `${t.mode}\n\nUzasadnienie trybu:\nAgent wybral najmniejszy bezpieczny tryb pracy.`],
+    ["Cel / Outcome", t.outcome],
+    ["Kryteria sukcesu", `- ${t.success}`],
+    ["Priorytet / Blocker", `Największy blocker teraz: ${t.outcome}\nDowód blockera: polecenie użytkownika i aktualny task\nCzy ten task rusza blocker: TAK\nJeśli NIE, powód: NOT_APPLICABLE\nDlaczego mimo to robimy teraz: nie dotyczy\nWarunek powrotu do blockera: nie dotyczy`],
+    ["Kontekst dla agenta", `Moduł: ${t.module}\nTryb zmiany: ${t.change}\nDozwolone pliki do zmiany:\n${allowed}\nKontrakty do przeczytania: tylko pliki potrzebne do taska\nCzego nie ruszać: pliki poza zakresem`],
+    ["Zakres", `Moduł: ${t.module}\nPliki: ${t.files}`],
+    ["Escalation", "Czy brakuje danych do bezpiecznej zmiany?\nNIE\n\nJeśli TAK:\nStatus: BLOCKED_BY_MISSING_EVIDENCE\nNajmniejszy następny krok: audit albo test reprodukcyjny"],
+    ["Klasyfikacja", `${t.klass}\n\nUzasadnienie:\nZmiana jest wymagana dla aktualnego outcome.`],
+    ["Diagnoza", `Root cause: ustalic przed kodem.\nDowód: wskazac przed finalnym PASS.\nMinimalny fix: najmniejszy diff w allowliscie.\n${proof}`],
+    ["Plan", "- [ ] Przeczytać tylko pliki potrzebne do zmiany.\n- [ ] Wykonać minimalny diff.\n- [ ] Uruchomić weryfikację."],
+    ["Weryfikacja", "Komendy:\nustali agent przed zamknieciem taska\nExpected result: PASS."],
+    ["Review / Wyniki", `Co zmieniono: nie zakończono.\nJak sprawdzono: nie uruchomiono jeszcze.\nPASS / FAIL: ${t.review}\nRyzyka: brak finalnej weryfikacji.\nFollow-up: brak.`]
+  ];
+  return `# Current Task\n\nTask ID: ${t.id}\nTask Date: ${t.date}\nTask Status: ACTIVE\n\n${sections.map(s => `## ${s[0]}\n${s[1]}`).join("\n\n")}\n`;
+}
+
+function renderAudit(t) {
+  const allowed = t.allowed.map(x => `- ${x}`).join("\n");
+  const sections = [
+    ["Tryb pracy", "AUDIT\n\nUzasadnienie trybu:\nDiagnoza bez zmiany plikow projektu."],
+    ["Cel / Outcome", t.outcome],
+    ["Kryteria sukcesu", `- ${t.success}`],
+    ["Priorytet / Blocker", `Największy blocker teraz: ${t.outcome}\nDowód blockera: polecenie użytkownika i aktualny task\nCzy ten task rusza blocker: TAK\nJeśli NIE, powód: NOT_APPLICABLE\nDlaczego mimo to robimy teraz: nie dotyczy\nWarunek powrotu do blockera: nie dotyczy`],
+    ["Kontekst dla agenta", `Moduł: ${t.module}\nTryb zmiany: audit-only\nDozwolone pliki do zmiany:\n${allowed}\nKontrakty do przeczytania: tylko zrodla potrzebne do audytu\nCzego nie ruszać: wszystkie pliki projektu`],
+    ["Zakres", `Moduł: ${t.module}\nPliki: ${t.files}`],
+    ["Escalation", "Czy brakuje danych do bezpiecznej diagnozy?\nNIE\n\nJeśli TAK:\nStatus: BLOCKED_BY_MISSING_EVIDENCE\nNajmniejszy następny krok: zebrac brakujacy dowod"],
+    ["Klasyfikacja", `${t.klass}\n\nUzasadnienie:\nAudit jest wymagany przed bezpieczna zmiana albo decyzja.`],
+    ["Fakty", "Fakty do ustalenia w audycie."],
+    ["Dowody", "Dowody do wypisania w audycie."],
+    ["Ryzyka", "Ryzyka do oceny w audycie."],
+    ["Plan naprawczy", "Plan naprawczy powstaje po audycie; bez kodowania w tym tasku."],
+    ["Weryfikacja", "Komendy:\nustali agent w audycie\nExpected result: PASS albo jawny blocker."],
+    ["Review / Wyniki", `Co zmieniono: audit-only, bez zmian w plikach projektu.\nJak sprawdzono: nie uruchomiono jeszcze.\nPASS / FAIL: ${t.review}\nRyzyka: brak finalnej weryfikacji.\nFollow-up: brak.`]
   ];
   return `# Current Task\n\nTask ID: ${t.id}\nTask Date: ${t.date}\nTask Status: ACTIVE\n\n${sections.map(s => `## ${s[0]}\n${s[1]}`).join("\n\n")}\n`;
 }

@@ -30,6 +30,10 @@ Nie stosuj pełnej procedury do drobnego fixa, jeśli nie dotyczy runtime/danych
 CONTENT_FIX stosuj tylko wtedy, gdy task nie dotyka API, auth, DB, workerów, providerów, danych użytkownika, security ani źródła prawdy.
 Nie omijaj pełnej procedury, jeśli task dotyczy runtime, danych, API, workerów, providerów, kontraktów albo dużych plików.
 
+Użytkownik nie wypełnia taska ręcznie.
+Agent sam wybiera najmniejszy bezpieczny tryb i tworzy task przez `task:new`.
+`task:new` ma generować krótki formularz dla MINIMAL_FIX, CONTENT_FIX i AUDIT oraz pełny formularz tylko dla RUNTIME_FIX, STRUCTURE_FIX i FEATURE.
+
 ## Escalation
 
 Jeśli brakuje danych do bezpiecznej zmiany:

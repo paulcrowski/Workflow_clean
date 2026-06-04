@@ -134,3 +134,18 @@ Uzywaj `CONTENT_FIX` tylko dla copy, statycznej tresci i malego UI polish. Jesli
 
 ## Test / guardrail
 `scripts/task-lifecycle.js`, `scripts/check-task.js` i `scripts/check-diff-size.js` znaja `CONTENT_FIX`; limit diffu to 3 liczone pliki / 80 liczonych linii.
+
+## Data
+2026-06-04
+
+## Błąd
+Pełny formularz taska dla każdego trybu pracy zwiekszal zuzycie tokenow i tarcie, mimo ze uzytkownik chce tylko powiedziec agentowi outcome.
+
+## Przyczyna
+`task:new` mial jeden duzy szablon dla wszystkich trybow, a `check-task` wymagal pelnych sekcji nawet dla MINIMAL_FIX, CONTENT_FIX i AUDIT.
+
+## Reguła zapobiegawcza
+Task lifecycle jest narzedziem agenta, nie uzytkownika. Agent wybiera najmniejszy bezpieczny tryb, a generator tworzy krotki formularz dla lekkich trybow i pelny formularz tylko dla zmian runtime/structure/feature.
+
+## Test / guardrail
+`scripts/task-lifecycle.js` generuje mode-aware templates, a `scripts/check-task.js` waliduje wymagane sekcje zależnie od trybu pracy.
