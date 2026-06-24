@@ -21,7 +21,7 @@ const status = field("Task Status");
 
 if (!id) fail(`${taskFile} must include 'Task ID: YYYY-MM-DD-slug'.`);
 if (!date) fail(`${taskFile} must include 'Task Date: YYYY-MM-DD'.`);
-if (!status) fail(`${taskFile} must include 'Task Status: ACTIVE'.`);
+if (!status) fail(`${taskFile} must include 'Task Status: ACTIVE' or 'READY_FOR_NEXT_TASK'.`);
 
 if (!/^\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*$/.test(id)) {
   fail(`Invalid Task ID '${id}'. Expected YYYY-MM-DD-slug.`);
@@ -33,6 +33,15 @@ if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
 
 if (!id.startsWith(`${date}-`)) {
   fail(`Task ID '${id}' must start with Task Date '${date}-'.`);
+}
+
+if (status === "READY_FOR_NEXT_TASK") {
+  if (!id.endsWith("-ready-for-next-task")) {
+    fail(`Ready task must use Task ID '*-ready-for-next-task'. Found: ${id}`);
+  }
+
+  console.log(`check:task-freshness PASS - ${id}, ${status}`);
+  process.exit(0);
 }
 
 if (status !== "ACTIVE") {

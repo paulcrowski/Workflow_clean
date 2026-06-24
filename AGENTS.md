@@ -1,38 +1,44 @@
 # AGENTS.md
 
-## Zasada główna
+## Entry Point
 
-Pracuj outcome-first.
+To jest jedyny always-on entrypoint workflow.
 
-Najpierw ustal:
-1. jaki jest oczekiwany wynik,
-2. jakie są kryteria sukcesu,
-3. jakie są ograniczenia,
-4. jakie dowody są dostępne,
-5. jaka jest najmniejsza bezpieczna zmiana.
+Pracuj outcome-first:
+1. oczekiwany wynik,
+2. kryteria sukcesu,
+3. ograniczenia,
+4. dostępne dowody,
+5. najmniejsza bezpieczna zmiana.
 
-Nie zaczynaj od kodowania.
+Nie zaczynaj od kodowania. Jeśli brakuje danych do bezpiecznej zmiany, użyj ESCALATION.
+Repo trzyma procedurę. Prompt trzyma outcome.
 
-Jeśli brakuje danych do bezpiecznej zmiany, nie koduj. Użyj ESCALATION.
+## Tryby pracy
 
-## Tryb pracy
+`MINIMAL_FIX` - mały bugfix, max 3 pliki, max 50 LOC.
+`CONTENT_FIX` - copy albo mały UI polish bez runtime/danych, max 3 pliki, max 80 LOC.
+`RUNTIME_FIX` - API, worker, parser, kolejka, cache, provider, UI status.
+`STRUCTURE_FIX` - granice modułów, zależności, duży plik, god file.
+`FEATURE` - nowa funkcja.
+`AUDIT` - tylko diagnoza, bez kodowania.
 
-Każdy task oznacz jako:
+Nie stosuj pełnej procedury do drobnego fixa bez runtime/danych/krytycznego flow.
+`CONTENT_FIX` nie dotyka API, auth, DB, workerów, providerów, security ani źródła prawdy.
+Użytkownik nie wypełnia taska ręcznie. Agent wybiera najmniejszy bezpieczny tryb i uruchamia `task:new`.
 
-MINIMAL_FIX - mały bugfix, max 3 pliki, max 50 LOC.
-CONTENT_FIX - copy, statyczna treść albo mały UI polish bez runtime/danych, max 3 pliki, max 80 LOC.
-RUNTIME_FIX - API, worker, parser, kolejka, cache, UI status, provider.
-STRUCTURE_FIX - duży plik, zależności, granice modułów, god file.
-FEATURE - nowa funkcja.
-AUDIT - tylko diagnoza, bez kodowania.
+## Co Czytać On-Demand
 
-Nie stosuj pełnej procedury do drobnego fixa, jeśli nie dotyczy runtime/danych/krytycznego flow.
-CONTENT_FIX stosuj tylko wtedy, gdy task nie dotyka API, auth, DB, workerów, providerów, danych użytkownika, security ani źródła prawdy.
-Nie omijaj pełnej procedury, jeśli task dotyczy runtime, danych, API, workerów, providerów, kontraktów albo dużych plików.
+Zawsze startuj od tego pliku.
 
-Użytkownik nie wypełnia taska ręcznie.
-Agent sam wybiera najmniejszy bezpieczny tryb i tworzy task przez `task:new`.
-`task:new` ma generować krótki formularz dla MINIMAL_FIX, CONTENT_FIX i AUDIT oraz pełny formularz tylko dla RUNTIME_FIX, STRUCTURE_FIX i FEATURE.
+Czytaj dodatkowe źródła tylko wtedy, gdy task tego wymaga:
+- `docs/AGENT_READY_WORKFLOW.md` dla projektowania taska.
+- `docs/ARCHITECTURE_GUARDS.md` dla runtime/API/worker/UI/provider.
+- `docs/CODE_STRUCTURE_GUARDS.md` dla dużych plików, granic modułów i zależności.
+- `docs/CONTEXT_BUDGET_GUARD.md` dla długich albo drogich sesji.
+- `docs/CONTRACTS.md` i `docs/MODULE_MAP.md` tylko gdy zmieniasz kontrakt albo kilka modułów.
+- `AGENT_DEV_POLICY.md` jako reference/on-demand dla maintainerów workflow i rzadszych edge case'ów.
+- `README.md` jako onboarding repo, nie jako domyślny kontrakt taska.
 
 ## Escalation
 
@@ -40,80 +46,41 @@ Jeśli brakuje danych do bezpiecznej zmiany:
 - nie koduj,
 - wypisz brakujące dowody,
 - zaproponuj najmniejszy audit albo test reprodukcyjny,
-- oznacz status jako BLOCKED_BY_MISSING_EVIDENCE.
+- oznacz status jako `BLOCKED_BY_MISSING_EVIDENCE`.
 
-## Klasyfikacja zmiany
+## Klasyfikacja
 
-Każdą zmianę oznacz jako:
+`REQUIRED` - trzeba zrobić teraz.
+`NICE_TO_HAVE` - dobre, ale nie teraz.
+`OVERBUILD` - nie robić.
 
-REQUIRED - trzeba zrobić teraz, bo blokuje działanie.
-NICE_TO_HAVE - dobre, ale na później.
-OVERBUILD - nie robić.
-
-Jeśli zmiana jest NICE_TO_HAVE albo OVERBUILD, nie koduj jej.
-Zapisz ją do ParkingLot.md.
-
-## Guard Scope
-
-Nie wdrażaj wszystkich guardów naraz.
-
-Dla każdego taska wskaż:
-
-REQUIRED GUARDS:
-- guardy konieczne do naprawy aktualnego błędu.
-
-NICE_TO_HAVE GUARDS:
-- dobre, ale niepotrzebne teraz.
-
-OVERBUILD GUARDS:
-- nie robić w tym tasku.
-
-Implementuj tylko REQUIRED.
-Resztę zapisz do ParkingLot.md.
+Jeśli zmiana jest `NICE_TO_HAVE` albo `OVERBUILD`, nie koduj jej. Zapisz ją do `ParkingLot.md`.
 
 ## Priorytet / Blocker
 
-Przed kolejnym slicem odpowiedz:
-- jaki jest największy blocker dla realnego domknięcia,
-- jaki jest dowód, że to blocker,
+Przed kolejnym slicem wskaż:
+- największy blocker,
+- dowód blockera,
 - czy aktualny task go rusza,
-- jeśli nie, wybierz powód: BLOCKED_EXTERNAL_STATE, REQUIRED_PREREQUISITE, RISKY_WITHOUT_AUDIT albo SMALL_FIX_UNBLOCKING_MAIN_WORK,
-- jeśli nie, wpisz warunek powrotu do blockera.
+- jeśli nie: `BLOCKED_EXTERNAL_STATE`, `REQUIRED_PREREQUISITE`, `RISKY_WITHOUT_AUDIT` albo `SMALL_FIX_UNBLOCKING_MAIN_WORK`,
+- warunek powrotu do blockera.
 
-Jeśli znany blocker produktu/live proof jest otwarty, nie bierz łatwego zielonego slice’a z innego obszaru, chyba że blocker jest naprawdę zablokowany zewnętrznie i zapiszesz to w tasku.
 Nie rób dwóch kolejnych tasków z `Czy ten task rusza blocker: NIE`.
 
-## Zasady pracy
-
-1. Jedna zmiana = jeden commit.
-2. Jeden task = jeden problem.
-3. Każdy task ma mieć PASS / FAIL.
-4. Nie ma DONE bez dowodu.
-5. Nie refaktoruj przy okazji.
-6. Nie dodawaj funkcji poza zakresem.
-7. Nie zmieniaj stylu kodu bez potrzeby.
-8. Nie twórz helperów użytych raz.
-9. Nie twórz nowego subsystemu bez zgody.
-10. Nie dotykaj plików poza zakresem.
-11. Jeśli task wymaga >20 plików albo >250 LOC diffu, przerwij i zrób re-plan.
-12. Jeśli task dotyczy API, workera, kolejki, parsera, UI statusu albo providera, stosuj docs/ARCHITECTURE_GUARDS.md.
-13. Jeśli task dotyka dużego pliku, core, runtime albo wielu modułów, stosuj docs/CODE_STRUCTURE_GUARDS.md.
-14. Jeśli task jest długi albo kosztowny tokenowo, stosuj docs/CONTEXT_BUDGET_GUARD.md.
-
-## Scope lock
+## Scope Lock
 
 Każdy task musi wskazać:
-- Tryb zmiany: code-change / audit-only / release-build.
-- Dozwolone pliki do zmiany.
+- `Tryb zmiany: code-change / audit-only / release-build`
+- `Dozwolone pliki do zmiany`
 
 Zasady:
-- code-change: wolno dotknąć tylko plików z allowlisty.
-- audit-only: nie wolno zmienić żadnego pliku.
-- release-build: artefakty generowane są dozwolone tylko, jeśli są jawnie wpisane w allowlistę.
-- artifacts/** jest zablokowane poza release-build.
-- unexpected change = STOP i popraw scope albo cofnij własną zmianę.
+- `code-change`: wolno dotknąć tylko allowlisty.
+- `audit-only`: nie wolno zmienić żadnego pliku.
+- `release-build`: artefakty tylko, jeśli są jawnie w allowliście.
+- `artifacts/**` jest zablokowane poza `release-build`.
+- unexpected change = STOP i popraw scope.
 
-## Failure-first
+## Failure-First
 
 Dla runtime, danych, API, workerów, parserów, providerów, UI statusu i side-effectów nie wystarczy happy path.
 
@@ -125,83 +92,75 @@ Przed kodowaniem wskaż:
 5. plan testów,
 6. dowód PASS / FAIL.
 
-Jeśli nie da się opisać końca flow, retry policy, idempotencji albo źródła prawdy, nie koduj. Stosuj `docs/ARCHITECTURE_GUARDS.md`.
+Jeśli nie da się opisać końca flow, retry policy, idempotencji albo źródła prawdy, nie koduj. Użyj `docs/ARCHITECTURE_GUARDS.md`.
 
-## Modularność
+## Zasady Pracy
 
-Repo ma być AI-readable.
+1. Jedna zmiana = jeden commit.
+2. Jeden task = jeden problem.
+3. Każdy task ma mieć PASS / FAIL.
+4. Nie ma DONE bez dowodu.
+5. Nie refaktoruj przy okazji.
+6. Nie dodawaj funkcji poza zakresem.
+7. Nie twórz nowego subsystemu bez zgody.
+8. Nie dotykaj plików poza zakresem.
+9. Jeśli task wymaga >20 plików albo >250 LOC diffu, przerwij i zrób re-plan.
+10. Nie ładuj wszystkich guardów do każdego promptu.
 
-Każdy moduł:
-- ma jedną odpowiedzialność,
-- ma własne pliki,
-- ma własny kontrakt,
-- nie importuje wnętrza obcych modułów,
-- nie wymaga czytania całego repo.
+## Minimalny Format Przed Kodowaniem
 
-Presentation nie zna implementacji Business Logic.
-Business Logic nie zna UI ani szczegółów DB.
-Data Access nie liczy reguł domenowych.
-Moduły komunikują się przez kontrakty.
+`MINIMAL_FIX`
+- tryb pracy
+- root cause
+- dowód
+- minimalny fix
+- test
 
-Jeśli agent musi czytać całe repo, task albo architektura są źle zaprojektowane.
+`CONTENT_FIX`
+- tryb pracy
+- root cause
+- dowód
+- minimalny fix
+- test albo visual/render proof
 
-## Minimalny format przed kodowaniem
+`RUNTIME_FIX` / `STRUCTURE_FIX` / `FEATURE`
+- tryb pracy
+- Priorytet / Blocker
+- diagnoza
+- granice
+- kontrakt
+- failure modes
+- Guard Scope
+- plan testów
+- plan zmiany
 
-Pokaż tylko to, co potrzebne dla trybu pracy.
+`AUDIT`
+- fakty
+- dowody
+- ryzyka
+- plan naprawczy
+- zero kodu
 
-Dla MINIMAL_FIX:
-- tryb pracy,
-- root cause,
-- dowód,
-- minimalny fix,
-- test.
+## Zakazy
 
-Dla CONTENT_FIX:
-- tryb pracy,
-- root cause,
-- dowód,
-- minimalny fix,
-- test albo visual/render proof, jeśli dotyczy UI.
+- happy-path only
+- silent fallback
+- empty success
+- infinite retry
+- `any` / `null` jako wynik biznesowy
+- mieszanie fetch/parse/validate/state/UI
+- retry dla parse/schema/validation/business errors
+- zapisywanie niezweryfikowanych danych jako faktu
+- przepisywanie całego pliku bez potrzeby
+- duży refactor bez osobnego taska
+- powiększanie god file bez planu
+- odwracanie kierunku zależności
+- obchodzenie kontraktów modułów
+- zgadywanie bez dowodu
 
-Dla RUNTIME_FIX / STRUCTURE_FIX / FEATURE:
-- tryb pracy,
-- Priorytet / Blocker,
-- diagnoza,
-- granice,
-- kontrakt,
-- failure modes,
-- Guard Scope,
-- plan testów,
-- plan zmiany.
+## Raport Po Zmianie
 
-Dla AUDIT:
-- fakty,
-- dowody,
-- ryzyka,
-- plan naprawczy,
-- zero kodu.
-
-## Zakaz
-
-- happy-path only,
-- silent fallback,
-- empty success,
-- infinite retry,
-- any/null jako wynik biznesowy,
-- mieszanie fetch/parse/validate/state/UI,
-- retry dla parse/schema/validation/business errors,
-- zapisywanie niezweryfikowanych danych jako faktu,
-- przepisywanie całego pliku bez potrzeby,
-- duży refactor bez osobnego taska,
-- powiększanie god file bez planu,
-- odwracanie kierunku zależności,
-- obchodzenie kontraktów modułów,
-- zgadywanie bez dowodu,
-- ładowanie wszystkich guardów do każdego promptu.
-
-## Raport po zmianie
-
-Po zmianie pokaż:
+Pokaż:
 
 Zrobione:
 Pliki:

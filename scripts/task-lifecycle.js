@@ -34,6 +34,7 @@ function taskNew(a) {
   write(file, render({
     id,
     date,
+    status: "ACTIVE",
     mode,
     change,
     klass,
@@ -69,6 +70,7 @@ function taskClose(a) {
   write(file, render({
     id: `${date}-ready-for-next-task`,
     date,
+    status: "READY_FOR_NEXT_TASK",
     mode: "MINIMAL_FIX",
     change: "code-change",
     klass: "REQUIRED",
@@ -95,7 +97,7 @@ function renderFull(t) {
     ["Cel / Outcome", t.outcome],
     ["Kryteria sukcesu", `- ${t.success}`],
     ["Priorytet / Blocker", `Największy blocker teraz: ${t.outcome}\nDowód blockera: polecenie użytkownika i aktualny task\nCzy ten task rusza blocker: TAK\nJeśli NIE, powód: NOT_APPLICABLE\nDlaczego mimo to robimy teraz: nie dotyczy\nWarunek powrotu do blockera: nie dotyczy`],
-    ["Kontekst dla agenta", `Moduł: ${t.module}\nTryb zmiany: ${t.change}\nMaksymalny zakres plików: allowlista z taska\nDozwolone pliki do zmiany:\n${allowed}\nKontrakty do przeczytania: AGENTS.md, README.md\nPliki zakazane: wszystko poza allowlistą\nCzego nie ruszać: pliki poza zakresem`],
+    ["Kontekst dla agenta", `Moduł: ${t.module}\nTryb zmiany: ${t.change}\nMaksymalny zakres plików: allowlista z taska\nDozwolone pliki do zmiany:\n${allowed}\nKontrakty do przeczytania: AGENTS.md oraz tylko potrzebne docs dla tego taska\nPliki zakazane: wszystko poza allowlistą\nCzego nie ruszać: pliki poza zakresem`],
     ["Zakres", `Moduł: ${t.module}\nPliki: ${t.files}`],
     ["Reprodukcja / dowód problemu", "Task utworzony z polecenia użytkownika albo przez zamknięcie poprzedniego taska."],
     ["Escalation", "Czy brakuje danych do bezpiecznej zmiany?\nNIE\n\nJeśli TAK:\nBrakujące dane: brak\nCzego nie da się potwierdzić: brak\nRyzyko kodowania teraz: niskie po utrzymaniu scope locka\nNajmniejszy następny krok: wykonać najmniejszą zmianę z allowlisty"],
@@ -115,7 +117,7 @@ function renderFull(t) {
     ["Definition of Done", "- [ ] test PASS\n- [ ] build PASS albo NOT_NEEDED z uzasadnieniem\n- [ ] brak ERROR w logach\n- [ ] zmiana nie wychodzi poza zakres\n- [ ] brak refaktoru przy okazji\n- [ ] failure modes obsłużone\n- [ ] brak silent fallbacków\n- [ ] brak empty success\n- [ ] UI truth zachowane, jeśli dotyczy\n- [ ] dependency direction zachowany\n- [ ] brak cyklicznych zależności\n- [ ] duże pliki nie zostały powiększone bez uzasadnienia\n- [ ] implementowano tylko REQUIRED GUARDS"],
     ["Review / Wyniki", `Co zmieniono: nie zakończono.\nJak sprawdzono: nie uruchomiono jeszcze.\nPASS / FAIL: ${t.review}\nRyzyka: brak finalnej weryfikacji.\nFollow-up: brak.`]
   ];
-  return `# Current Task\n\nTask ID: ${t.id}\nTask Date: ${t.date}\nTask Status: ACTIVE\n\n${sections.map(s => `## ${s[0]}\n${s[1]}`).join("\n\n")}\n`;
+  return `# Current Task\n\nTask ID: ${t.id}\nTask Date: ${t.date}\nTask Status: ${t.status || "ACTIVE"}\n\n${sections.map(s => `## ${s[0]}\n${s[1]}`).join("\n\n")}\n`;
 }
 
 function renderLight(t) {
@@ -137,7 +139,7 @@ function renderLight(t) {
     ["Weryfikacja", "Komendy:\nustali agent przed zamknieciem taska\nExpected result: PASS."],
     ["Review / Wyniki", `Co zmieniono: nie zakończono.\nJak sprawdzono: nie uruchomiono jeszcze.\nPASS / FAIL: ${t.review}\nRyzyka: brak finalnej weryfikacji.\nFollow-up: brak.`]
   ];
-  return `# Current Task\n\nTask ID: ${t.id}\nTask Date: ${t.date}\nTask Status: ACTIVE\n\n${sections.map(s => `## ${s[0]}\n${s[1]}`).join("\n\n")}\n`;
+  return `# Current Task\n\nTask ID: ${t.id}\nTask Date: ${t.date}\nTask Status: ${t.status || "ACTIVE"}\n\n${sections.map(s => `## ${s[0]}\n${s[1]}`).join("\n\n")}\n`;
 }
 
 function renderAudit(t) {
@@ -158,7 +160,7 @@ function renderAudit(t) {
     ["Weryfikacja", "Komendy:\nustali agent w audycie\nExpected result: PASS albo jawny blocker."],
     ["Review / Wyniki", `Co zmieniono: audit-only, bez zmian w plikach projektu.\nJak sprawdzono: nie uruchomiono jeszcze.\nPASS / FAIL: ${t.review}\nRyzyka: brak finalnej weryfikacji.\nFollow-up: brak.`]
   ];
-  return `# Current Task\n\nTask ID: ${t.id}\nTask Date: ${t.date}\nTask Status: ACTIVE\n\n${sections.map(s => `## ${s[0]}\n${s[1]}`).join("\n\n")}\n`;
+  return `# Current Task\n\nTask ID: ${t.id}\nTask Date: ${t.date}\nTask Status: ${t.status || "ACTIVE"}\n\n${sections.map(s => `## ${s[0]}\n${s[1]}`).join("\n\n")}\n`;
 }
 
 function parse(argv) {

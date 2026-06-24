@@ -149,3 +149,18 @@ Task lifecycle jest narzedziem agenta, nie uzytkownika. Agent wybiera najmniejsz
 
 ## Test / guardrail
 `scripts/task-lifecycle.js` generuje mode-aware templates, a `scripts/check-task.js` waliduje wymagane sekcje zależnie od trybu pracy.
+
+## Data
+2026-06-24
+
+## Błąd
+Always-on wejscie workflow znow zaczelo rosnac, bo entrypoint rozlalo sie na `AGENTS.md`, `AGENT_DEV_POLICY.md` i domyslne czytanie `README.md`, a zamkniety task nadal wygladal jak aktywna praca.
+
+## Przyczyna
+`AGENTS.md` traktowalo `AGENT_DEV_POLICY.md` jako obowiazkowe, pelny task wpisywal `README.md` jako kontrakt do przeczytania, a `task:close` resetowal `tasks/todo.md` do stanu `ACTIVE`.
+
+## Reguła zapobiegawcza
+`AGENTS.md` ma byc jedynym always-on entrypointem. `AGENT_DEV_POLICY.md` i `README.md` sa tylko on-demand. Po `task:close` repo ma miec jawny stan `READY_FOR_NEXT_TASK`, nie pseudo-aktywny task.
+
+## Test / guardrail
+`scripts/task-lifecycle.js` wpisuje tylko `AGENTS.md` jako domyslny entrypoint pelnego taska, a `scripts/check-task-freshness.js` akceptuje `READY_FOR_NEXT_TASK` jako stan oczekiwania.

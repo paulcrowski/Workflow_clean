@@ -1,5 +1,7 @@
 # AGENT_DEV_POLICY.md
 
+Dokument referencyjny workflow. Nie jest always-on entrypointem; czytaj go tylko wtedy, gdy `AGENTS.md` albo aktualny task wyraźnie tego wymaga.
+
 ## TL;DR
 
 1. Outcome first, process only as needed.
@@ -23,6 +25,7 @@
 19. Jeśli brakuje danych do bezpiecznej zmiany, nie koduj. Użyj ESCALATION.
 20. Repo trzyma procedurę, prompt trzyma outcome.
 21. Scope lock jest mechaniczny: task wskazuje tryb zmiany i allowlistę plików.
+22. Dla projektowania taska głównym dokumentem jest `docs/AGENT_READY_WORKFLOW.md`.
 
 ## Prompting rule for GPT-5.5 / Codex
 
@@ -37,7 +40,6 @@ Prompt roboczy ma zawierać:
 
 Procedura żyje w repo:
 - AGENTS.md,
-- AGENT_DEV_POLICY.md,
 - docs/ARCHITECTURE_GUARDS.md,
 - docs/CODE_STRUCTURE_GUARDS.md,
 - docs/CONTEXT_BUDGET_GUARD.md.
@@ -160,3 +162,18 @@ Po każdej korekcie dopisz do tasks/lessons.md:
 - przyczynę,
 - regułę zapobiegawczą,
 - test/guardrail.
+
+## Gates
+
+Local work:
+- nearest focused test,
+- `npm run check:task` gdy `tasks/todo.md` jest dotknięty albo wymagany,
+- `npm run check:diff-size` przed commitem,
+- `npm run check:godfiles` przed commitem,
+- `npm run gate:local` dla pełnej lokalnej bramy.
+
+PR/main:
+- `npm run gate:pr` przed PR albo push,
+- `npm run gate:main` przed merge albo zamknięciem kandydata.
+
+`DONE` znaczy lokalny DoD i dowody. `MERGE READY` znaczy, że bramy PR/main są spełnione.

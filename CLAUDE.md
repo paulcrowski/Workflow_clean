@@ -1,4 +1,5 @@
-Zawsze stosuj AGENTS.md i AGENT_DEV_POLICY.md.
+Startuj od AGENTS.md.
+AGENT_DEV_POLICY.md czytaj tylko wtedy, gdy AGENTS.md albo aktualny task wyraźnie tego wymaga.
 
 Dla runtime/API/worker/UI stosuj docs/ARCHITECTURE_GUARDS.md.
 Dla dużych plików, granic modułów i zależności stosuj docs/CODE_STRUCTURE_GUARDS.md.

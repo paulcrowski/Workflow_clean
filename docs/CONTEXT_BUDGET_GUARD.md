@@ -7,6 +7,8 @@ Workflow ma poprawiać jakość kodowania, ale nie może sam stawać się cięż
 Repo trzyma pełne zasady.
 Prompt roboczy ma być krótki i outcome-first.
 
+`AGENTS.md` ma byc jedynym always-on entrypointem. Reszta dokumentow jest ladowana on-demand.
+
 ## 1. AGENTS.md ma być krótki
 
 Limit orientacyjny:

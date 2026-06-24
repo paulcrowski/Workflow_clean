@@ -40,12 +40,15 @@ Presetow nie warto dodawac na slepo. Dodaj je dopiero, gdy konfiguracja nowego s
 
 ## Co to daje
 
-- `AGENTS.md` trzyma krotka instrukcje pracy dla agenta.
-- `AGENT_DEV_POLICY.md` trzyma pelna polityke developerska.
+- `AGENTS.md` jest jedynym always-on entrypointem dla agenta.
+- `AGENT_DEV_POLICY.md` jest dokumentem referencyjnym, ladowanym on-demand.
+- `docs/AGENT_READY_WORKFLOW.md` trzyma zasady projektowania taskow jako closed loop `REPRO -> FAIL -> FIX -> PASS`.
 - `docs/` trzyma guardy dla runtime, struktury kodu, kontraktow i budzetu kontekstu.
 - `tasks/todo.md` jest aktualnym taskiem.
-- `tasks/TASK_TEMPLATE.md` jest czystym formularzem do skopiowania przy nowym tasku.
+- `tasks/TASK_TEMPLATE.md` jest referencyjnym szkicem; realny task powinien powstawac przez `task:new`.
 - `scripts/` zawiera mechaniczne guardy dla taska, scope locka, diffu i duzych plikow.
+
+`README.md` jest onboardingiem repo. Nie jest domyslnym kontraktem taska.
 
 ## Task lifecycle dla Codexa
 
@@ -53,7 +56,8 @@ Ty dalej mowisz normalnie: "zrob X". Codex pod spodem moze uzyc tych komend, zeb
 Nie wypelniasz taska sam. Agent wybiera najmniejszy bezpieczny tryb pracy i odpala `task:new`.
 
 Dokladniej:
-[docs/TASK_LIFECYCLE.md](docs/TASK_LIFECYCLE.md)
+- [docs/TASK_LIFECYCLE.md](docs/TASK_LIFECYCLE.md)
+- [docs/AGENT_READY_WORKFLOW.md](docs/AGENT_READY_WORKFLOW.md)
 
 `task:new` generuje rozny formularz zależnie od trybu:
 - `MINIMAL_FIX` i `CONTENT_FIX`: krotki task, tylko root cause, dowod, minimalny fix i weryfikacja,
@@ -81,7 +85,7 @@ npm run task:close -- --result PASS
 
 Co to robi:
 - zapisuje skonczony task do `tasks/archive/`,
-- zostawia `tasks/todo.md` w stanie `ready-for-next-task`,
+- zostawia `tasks/todo.md` w stanie `READY_FOR_NEXT_TASK`,
 - blokuje przypadkowe kodowanie na starym scope.
 
 To sa narzedzia dla agenta. Nie musisz ich uruchamiac recznie, jesli pracujesz przez Codexa.
@@ -180,6 +184,13 @@ Guard failuje, gdy:
 Repo trzyma procedure. Prompt trzyma outcome.
 
 Nie doklejaj wszystkich guardow do kazdego promptu. Agent ma czytac repo i dobierac tylko to, co pasuje do taska.
+
+## Co jest nowe wzgledem starszej wersji workflow
+
+- task design ma osobny entrypoint w `docs/AGENT_READY_WORKFLOW.md`,
+- starter wyrazniej rozdziela lekki task od runtime/structure/feature,
+- `task:new` i `TASK_TEMPLATE` maja byc zgodne: krotki formularz dla lekkich taskow, pelny tylko dla ryzykownych,
+- workflow ma pilnowac nie tylko scope i diffu, ale tez zamknietego loopa z dowodem `PASS / FAIL`.
 
 ## Po utworzeniu aplikacji
 

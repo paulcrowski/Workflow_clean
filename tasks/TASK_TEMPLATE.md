@@ -1,13 +1,28 @@
-# Current Task
+# TASK_TEMPLATE
 
-Task ID: YYYY-MM-DD-short-slug
-Task Date: YYYY-MM-DD
+To nie jest juz glowny sposob tworzenia taska.
+
+Najpierw uzyj:
+
+```bash
+npm run task:new -- --slug ... --mode ... --change-mode ... --files ...
+```
+
+Powod:
+- `task:new` dobiera dlugosc formularza do ryzyka taska,
+- lekkie taski nie placa za runtime sections, ktorych nie potrzebuja,
+- runtime/structure/feature dalej dostaja pelny formularz.
+
+## Minimalny szkic referencyjny
+
+Kazdy task musi miec:
+
+```text
+Task ID:
+Task Date:
 Task Status: ACTIVE
 
 ## Tryb pracy
-MINIMAL_FIX / CONTENT_FIX / RUNTIME_FIX / STRUCTURE_FIX / FEATURE / AUDIT:
-
-Uzasadnienie trybu:
 ...
 
 ## Cel / Outcome
@@ -17,169 +32,42 @@ Uzasadnienie trybu:
 ...
 
 ## Priorytet / Blocker
-Największy blocker teraz:
-Dowód blockera:
-Czy ten task rusza blocker: TAK / NIE
-Jeśli NIE, powód: BLOCKED_EXTERNAL_STATE / REQUIRED_PREREQUISITE / RISKY_WITHOUT_AUDIT / SMALL_FIX_UNBLOCKING_MAIN_WORK / NOT_APPLICABLE
-Dlaczego mimo to robimy teraz:
-Warunek powrotu do blockera:
+...
 
 ## Kontekst dla agenta
-Moduł:
-Tryb zmiany: code-change / audit-only / release-build
-Maksymalny zakres plików:
-Dozwolone pliki do zmiany:
-- ...
-Kontrakty do przeczytania:
-Pliki zakazane:
-Czego nie ruszać:
-
-## Zakres
-Moduł:
-Pliki:
-
-## Reprodukcja / dowód problemu
 ...
-
-## Escalation
-Czy brakuje danych do bezpiecznej zmiany?
-TAK / NIE
-
-Jeśli TAK:
-Brakujące dane:
-Czego nie da się potwierdzić:
-Ryzyko kodowania teraz:
-Najmniejszy następny krok:
-
-## Klasyfikacja
-REQUIRED / NICE_TO_HAVE / OVERBUILD:
-
-Uzasadnienie:
-...
-
-## Diagnoza
-Root cause:
-Dowód:
-Aktualny flow:
-
-## Granice
-Moduły dotknięte:
-Kontrakty dotknięte:
-Poza zakresem:
-
-## Kontrakt
-INPUT:
-SUCCESS:
-ERRORS:
-STATUSES:
-SIDE EFFECTS:
-LOGS:
-TESTS:
-DONE:
-
-## Failure modes
-Timeout:
-Null/missing data:
-Invalid schema:
-Duplicate request:
-Concurrent request:
-Partial write:
-Worker crash:
-Retry loop:
-Provider unavailable:
-
-## Guard Scope
-REQUIRED GUARDS:
-- ...
-
-NICE_TO_HAVE GUARDS:
-- ...
-
-OVERBUILD GUARDS:
-- ...
-
-ParkingLot.md updated:
-YES / NO / NOT_NEEDED
-
-## Runtime guards
-State machine:
-Error classification:
-Idempotency:
-Single-flight:
-Worker lock:
-Circuit breaker:
-Backpressure:
-UI truth:
-Observability:
-
-## Code Structure Guard
-Czy dotykamy pliku >300 LOC?
-TAK / NIE
-
-Jeśli TAK:
-Plik:
-LOC:
-Dlaczego zmiana trafia tutaj:
-Czy plik ma wiele odpowiedzialności:
-Minimalny fix:
-Czy potrzebne wydzielenie odpowiedzialności:
-Ryzyko:
-
-## GOD_FILE_CHECK
-Wymagane, jeśli plik >500 LOC.
-
-Plik:
-LOC:
-Obecne odpowiedzialności:
-Czy task dokłada nową odpowiedzialność:
-Minimalny fix bez rozbicia:
-Małe wydzielenie odpowiedzialności:
-Ryzyko minimalnego fixu:
-Ryzyko wydzielenia:
-Rekomendacja:
-
-## Dependency Direction Guard
-Czy zmiana odwraca zależność?
-TAK / NIE
-
-Czy Business Logic importuje UI/DB/framework?
-TAK / NIE
-
-Czy adapter przecieka do core?
-TAK / NIE
-
-## Change Isolation
-Ile modułów dotyka zmiana:
-Czy to naturalne:
-Czy da się ograniczyć zmianę do jednego kontraktu:
-
-## Plan
-- [ ] Krok 1
-- [ ] Krok 2
-- [ ] Krok 3
 
 ## Weryfikacja
-Komendy:
-Expected result:
-
-## Definition of Done
-- [ ] test PASS
-- [ ] build PASS
-- [ ] brak ERROR w logach
-- [ ] zmiana nie wychodzi poza zakres
-- [ ] brak refaktoru przy okazji
-- [ ] failure modes obsłużone
-- [ ] brak silent fallbacków
-- [ ] brak empty success
-- [ ] UI truth zachowane, jeśli dotyczy
-- [ ] dependency direction zachowany
-- [ ] brak cyklicznych zależności
-- [ ] duże pliki nie zostały powiększone bez uzasadnienia
-- [ ] implementowano tylko REQUIRED GUARDS
+...
 
 ## Review / Wyniki
-Co zmieniono:
-Jak sprawdzono:
-PASS / FAIL:
-Ryzyka:
-Follow-up:
+PASS / FAIL: ...
+```
+
+## Co zalezy od trybu
+
+`MINIMAL_FIX` / `CONTENT_FIX`
+- root cause,
+- dowod,
+- minimalny fix,
+- najblizszy test albo visual/render proof.
+
+`AUDIT`
+- fakty,
+- dowody,
+- ryzyka,
+- plan naprawczy,
+- zero kodu.
+
+`RUNTIME_FIX` / `STRUCTURE_FIX` / `FEATURE`
+- reprodukcja,
+- granice,
+- kontrakt,
+- failure modes,
+- Guard Scope,
+- plan testow,
+- Definition of Done.
+
+## Zasada
+
+Jesli task nie daje zamknietego loopa `REPRO -> FAIL -> FIX -> PASS`, popraw task przed kodowaniem.

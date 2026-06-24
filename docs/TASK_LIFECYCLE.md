@@ -146,3 +146,5 @@ Po weryfikacji agent powinien:
 
 Task lifecycle ma chronic repo przed dryfem.
 Nie ma byc dodatkowa praca dla uzytkownika.
+
+Po `task:close` plik `tasks/todo.md` nie powinien juz udawac aktywnego taska. Stan oczekiwania to `Task Status: READY_FOR_NEXT_TASK`.
