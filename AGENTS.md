@@ -80,6 +80,14 @@ Zasady:
 - `artifacts/**` jest zablokowane poza `release-build`.
 - unexpected change = STOP i popraw scope.
 
+## Minimalna implementacja
+
+- Przed edycją nazwij jawne non-goals oraz zachowania, które mają pozostać bez zmian.
+- Implementuj tylko `REQUIRED`: najmniejszą bezpieczną zmianę spełniającą task w aktualnej allowliście.
+- Preferuj właściwy istniejący moduł. Abstrakcję, adapter, zależność, konfigurację, compatibility layer albo równoległą implementację dodaj tylko, gdy wymaga tego aktualny kontrakt, bezpieczeństwo wdrożenia lub guard struktury.
+- Uruchom najbliższe istniejące testy. Dodaj skupiony test regresyjny tylko wtedy, gdy obecne testy nie wykryją zmienianego zachowania.
+- Jeśli zakres lub architektura zaczyna rosnąć, zatrzymaj się i wykonaj re-plan albo ESCALATION.
+
 ## Failure-First
 
 Dla runtime, danych, API, workerów, parserów, providerów, UI statusu i side-effectów nie wystarczy happy path.
