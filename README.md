@@ -1,4 +1,4 @@
-# cleanWorkflow
+# Workflow_clean
 
 Minimalny, mechaniczny workflow do pracy z agentami AI. Repo pilnuje, żeby agent wykonał jedną potrzebną zmianę, w dozwolonych plikach, z dowodem `PASS` albo `FAIL`.
 
@@ -112,7 +112,7 @@ Po utworzeniu aplikacji dopnij do `package.json` prawdziwe komendy `lint`, `type
 
 ### What it is
 
-cleanWorkflow is a small, mechanical workflow for AI-assisted projects. It keeps each change scoped, reviewable, and backed by a `PASS` or `FAIL` result.
+Workflow_clean is a small, mechanical workflow for AI-assisted projects. It keeps each change scoped, reviewable, and backed by a `PASS` or `FAIL` result.
 
 The agent works outcome-first:
 
