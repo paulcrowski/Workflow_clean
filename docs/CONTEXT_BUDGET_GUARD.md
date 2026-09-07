@@ -74,7 +74,7 @@ Długie rozmowy są kosztowne i pogarszają precyzję.
 
 Zasada:
 - po 15-20 wymianach zrób compact summary,
-- przy dużym tasku po każdym etapie zapisz outcome do tasks/todo.md,
+- przy dużym tasku po każdym etapie zapisz outcome do tasks/todo.md, jeśli jest na allowliście; w `audit-only` podsumuj etap wyłącznie w rozmowie,
 - nie trzymaj całego procesu tylko w rozmowie.
 
 Summary ma zawierać:
@@ -86,23 +86,16 @@ Summary ma zawierać:
 - ryzyka,
 - next step.
 
-## 7. Extended thinking / deep reasoning
+## 7. Model i wysiłek dobrane do zadania
 
-Nie używaj ciężkiego reasoning do prostych fixów.
+Workflow nie wymaga konkretnego modelu. Wybór modelu i ustawień należy do użytkownika; nie zmieniaj ich automatycznie ani nie deklaruj zmiany, której narzędzia nie potwierdziły.
 
-Domyślnie OFF dla:
-- literówek,
-- rename,
-- prostych testów,
-- małych bugfixów.
-
-ON dla:
-- AUDIT,
-- RUNTIME_FIX,
-- STRUCTURE_FIX,
-- problemów z determinism/replay,
-- problemów z architekturą,
-- trudnych regresji.
+- Do prostych, dobrze określonych zadań preferuj niższy koszt i mały wysiłek rozumowania spośród dostępnych ustawień.
+- Większy wysiłek uzasadniają niepewność diagnozy, trudne regresje, zależności między modułami lub istotne ryzyko dla danych i użytkowników.
+- Sam tryb `AUDIT`, `RUNTIME_FIX` lub `STRUCTURE_FIX` nie wymusza ciężkiego rozumowania.
+- Gdy obecny model utknie mimo zebrania dowodów, przedstaw konkretny blocker i uzasadnij ewentualną propozycję użycia mocniejszego modelu.
+- Oszczędzaj przez wąski kontekst, minimalny diff i proporcjonalną weryfikację; nie pomijaj obowiązkowych kontroli ani failure modes.
+- Nie uruchamiaj subagentów domyślnie. Deleguj tylko na wyraźne polecenie użytkownika, do ograniczonych, niezależnych zadań; unikaj powielania analizy.
 
 ## 8. Prompt roboczy ma być krótki
 

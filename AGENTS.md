@@ -13,6 +13,7 @@ Pracuj outcome-first:
 
 Nie zaczynaj od kodowania. Jeśli brakuje danych do bezpiecznej zmiany, użyj ESCALATION.
 Repo trzyma procedurę. Prompt trzyma outcome.
+Zasady obowiązują niezależnie od wybranego modelu. Jawne instrukcje użytkownika mają pierwszeństwo przed wskazówkami workflow i skilli, z zachowaniem ograniczeń systemu i uprawnień.
 
 ## Tryby pracy
 
@@ -26,6 +27,7 @@ Repo trzyma procedurę. Prompt trzyma outcome.
 Nie stosuj pełnej procedury do drobnego fixa bez runtime/danych/krytycznego flow.
 `CONTENT_FIX` nie dotyka API, auth, DB, workerów, providerów, security ani źródła prawdy.
 Użytkownik nie wypełnia taska ręcznie. Agent wybiera najmniejszy bezpieczny tryb i uruchamia `task:new`.
+Dla `audit-only` wyjątek: opisz cel, zakres i wynik w rozmowie; nie uruchamiaj `task:new` ani `task:close`, nie zapisuj taska, archiwum ani Parking Lot. Ta zasada obowiązuje także przy czytaniu dokumentów on-demand.
 
 ## Co Czytać On-Demand
 
@@ -44,9 +46,12 @@ Czytaj dodatkowe źródła tylko wtedy, gdy task tego wymaga:
 
 Jeśli brakuje danych do bezpiecznej zmiany:
 - nie koduj,
-- wypisz brakujące dowody,
-- zaproponuj najmniejszy audit albo test reprodukcyjny,
-- oznacz status jako `BLOCKED_BY_MISSING_EVIDENCE`.
+- najpierw samodzielnie zbierz dostępne dowody przez odczyt kodu, logów i konfiguracji w dozwolonym zakresie,
+- wykonaj najmniejszą bezpieczną reprodukcję, jeśli mieści się w uprawnieniach i Scope Lock; `audit-only` nie dopuszcza zapisów ani side-effectów,
+- jeśli nadal brakuje dowodów, wypisz braki i oznacz status jako `BLOCKED_BY_MISSING_EVIDENCE`; wskaż najmniejszy następny krok,
+- pytaj użytkownika dopiero o niezbędną decyzję, uprawnienie lub informację, której nie możesz ustalić samodzielnie.
+
+Rutynowe decyzje w ustalonym zakresie podejmuj sam i kontynuuj do weryfikacji wyniku. Nie pytaj ponownie o wcześniej udzieloną zgodę. Jeśli instrukcja skilla blokuje pracę, wskaż plik, konkretną regułę i jej zastosowanie.
 
 ## Klasyfikacja
 
@@ -54,7 +59,7 @@ Jeśli brakuje danych do bezpiecznej zmiany:
 `NICE_TO_HAVE` - dobre, ale nie teraz.
 `OVERBUILD` - nie robić.
 
-Jeśli zmiana jest `NICE_TO_HAVE` albo `OVERBUILD`, nie koduj jej. Zapisz ją do `ParkingLot.md`.
+Jeśli zmiana jest `NICE_TO_HAVE` albo `OVERBUILD`, nie koduj jej. Zapisz ją do `ParkingLot.md` tylko poza `audit-only` i gdy plik jest na allowliście; w pozostałych przypadkach podaj ją w raporcie.
 
 ## Priorytet / Blocker
 
@@ -86,6 +91,7 @@ Zasady:
 - Implementuj tylko `REQUIRED`: najmniejszą bezpieczną zmianę spełniającą task w aktualnej allowliście.
 - Preferuj właściwy istniejący moduł. Abstrakcję, adapter, zależność, konfigurację, compatibility layer albo równoległą implementację dodaj tylko, gdy wymaga tego aktualny kontrakt, bezpieczeństwo wdrożenia lub guard struktury.
 - Uruchom najbliższe istniejące testy. Dodaj skupiony test regresyjny tylko wtedy, gdy obecne testy nie wykryją zmienianego zachowania.
+- Wykonaj obowiązkowe kontrole repo. Po PASS poszerzaj lub powtarzaj testy tylko po kolejnej zmianie, błędzie albo przy nierozstrzygniętym ryzyku. Dla copy i małego UI polish dobierz odczyt diffu lub visual/render proof; nie dodawaj testów powielających treść.
 - Jeśli zakres lub architektura zaczyna rosnąć, zatrzymaj się i wykonaj re-plan albo ESCALATION.
 
 ## Failure-First
@@ -168,7 +174,7 @@ Jeśli nie da się opisać końca flow, retry policy, idempotencji albo źródł
 
 ## Raport Po Zmianie
 
-Pokaż:
+Pisz krótko i prostym językiem, zaczynając od wyniku. Dla małej zmiany możesz połączyć poniższe pola w kilka zdań, zachowując dowód weryfikacji i istotne ograniczenia. Pokaż:
 
 Zrobione:
 Pliki:
