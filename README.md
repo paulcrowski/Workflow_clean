@@ -1,229 +1,205 @@
 # cleanWorkflow
 
-Starter workflow dla nowych projektow budowanych z agentami AI.
+Minimalny, mechaniczny workflow do pracy z agentami AI. Repo pilnuje, żeby agent wykonał jedną potrzebną zmianę, w dozwolonych plikach, z dowodem `PASS` albo `FAIL`.
 
-## W skrocie
+The same workflow is documented in English below. The repository rules live in [`AGENTS.md`](AGENTS.md); this README is only onboarding.
 
-Ten repozytorium daje maly, mechaniczny workflow dla pracy z agentem AI.
+- [Polski](#polski)
+- [English](#english)
 
-Cel jest prosty: agent ma robic jedna potrzebna zmiane, w dozwolonych plikach, z dowodem PASS / FAIL. Workflow blokuje typowe problemy:
-- kodowanie bez aktualnego taska,
-- zmiany poza zakresem,
-- dryf w łatwe zielone slice'y zamiast największego blockera,
-- za duzy diff dla malego fixa,
-- happy-path-only coding bez terminal states, retry policy i failure modes,
-- audit, ktory po cichu zmienia pliki,
-- traktowanie prostego copy/statycznego UI jak runtime taska,
-- aplikacje bez realnych `lint/typecheck/test/build`,
-- importy lamiace granice warstw.
+## Polski
 
-Dlaczego to istnieje: same instrukcje w promptach nie wystarczaja. Ten starter przenosi najwazniejsze zasady do repo i hookow, zeby bledy byly blokowane mechanicznie przed commitem albo PR.
+### Do czego służy
 
-## Ocena stanu
+Workflow porządkuje pracę agenta wokół pięciu pytań:
 
-Aktualna ocena: **9/10 jako starter workflow**.
+1. Jaki ma być wynik?
+2. Jak poznamy, że działa?
+3. Jakie są ograniczenia i dozwolone pliki?
+4. Jakie mamy dowody?
+5. Jaka jest najmniejsza bezpieczna zmiana?
 
-Mocne strony:
-- guardy sa mechaniczne, nie tylko opisane w promptach,
-- agent musi miec aktualny task, scope i dowod PASS / FAIL,
-- task musi mówić, czy rusza największy blocker,
-- agent moze tworzyc i zamykac taski komendami `task:new` / `task:close`,
-- male fixy maja twarde limity diffu,
-- proste copy/statyczne UI ma lekki tryb `CONTENT_FIX`,
-- runtime/data/UI taski maja failure-first checklist,
-- po dodaniu aplikacji workflow wymaga realnych `lint/typecheck/test/build`,
-- import boundaries sa sprawdzane przez konfig w repo.
+Agent nie powinien zaczynać od kodowania. Najpierw dobiera tryb pracy, sprawdza fakty, a po zmianie uruchamia kontrole odpowiednie do ryzyka.
 
-To nie jest jeszcze 10/10, bo celowo nie ma presetow per stack (`vite-react`, `next`, `expo`, `node-api`, `python`).
-
-Presetow nie warto dodawac na slepo. Dodaj je dopiero, gdy konfiguracja nowego stacka zacznie realnie spowalniac prace.
-
-## Co to daje
-
-- `AGENTS.md` jest jedynym always-on entrypointem dla agenta.
-- `AGENT_DEV_POLICY.md` jest dokumentem referencyjnym, ladowanym on-demand.
-- `docs/AGENT_READY_WORKFLOW.md` trzyma zasady projektowania taskow jako closed loop `REPRO -> FAIL -> FIX -> PASS`.
-- `docs/` trzyma guardy dla runtime, struktury kodu, kontraktow i budzetu kontekstu.
-- `tasks/todo.md` jest aktualnym taskiem.
-- `tasks/TASK_TEMPLATE.md` jest referencyjnym szkicem; realny task powinien powstawac przez `task:new`.
-- `scripts/` zawiera mechaniczne guardy dla taska, scope locka, diffu i duzych plikow.
-
-`README.md` jest onboardingiem repo. Nie jest domyslnym kontraktem taska.
-
-## Task lifecycle dla Codexa
-
-Ty dalej mowisz normalnie: "zrob X". Codex pod spodem moze uzyc tych komend, zeby nie przepisywac taska recznie.
-Nie wypelniasz taska sam. Agent wybiera najmniejszy bezpieczny tryb pracy i odpala `task:new`.
-
-Dokladniej:
-- [docs/TASK_LIFECYCLE.md](docs/TASK_LIFECYCLE.md)
-- [docs/AGENT_READY_WORKFLOW.md](docs/AGENT_READY_WORKFLOW.md)
-
-`task:new` generuje rozny formularz zależnie od trybu:
-- `MINIMAL_FIX` i `CONTENT_FIX`: krotki task, tylko root cause, dowod, minimalny fix i weryfikacja,
-- `AUDIT`: krotki task diagnostyczny bez kodowania,
-- `RUNTIME_FIX`, `STRUCTURE_FIX`, `FEATURE`: pelny formularz z kontraktem, failure modes i guardami.
-
-Nowy task:
+### Szybki start
 
 ```bash
-npm run task:new -- --slug simple-fix --mode MINIMAL_FIX --change-mode code-change --files src/example.js --outcome "Naprawic prosty blad" --success "gate PASS"
+npm install
+npm run hooks:install
+npm run gate:local
 ```
 
-Co to robi:
-- tworzy swiezy `tasks/todo.md`,
-- ustawia date, task ID, tryb pracy i scope,
-- dopisuje allowliste plikow,
-- dobiera dlugosc formularza do ryzyka taska,
-- zostawia miejsce na root cause, testy i dowod bez recznej pracy uzytkownika.
+Jeżeli pracujesz przez Codexa, wystarczy opisać cel normalnym językiem, na przykład: `Napraw błąd logowania i pokaż, jak to sprawdziłeś.` Agent dobiera tryb, zakres i weryfikację.
 
-Zamkniecie taska:
+### Tryby pracy
+
+| Tryb | Kiedy używać |
+| --- | --- |
+| `MINIMAL_FIX` | Mały bugfix, maksymalnie 3 pliki i 50 liczonych linii. |
+| `CONTENT_FIX` | Copy, dokumentacja, statyczna treść albo mały UI polish bez runtime i danych. |
+| `RUNTIME_FIX` | API, worker, parser, kolejka, cache, provider, dane albo status UI. |
+| `STRUCTURE_FIX` | Granice modułów, zależności, duży plik albo god file. |
+| `FEATURE` | Nowe zachowanie lub nowa funkcja. |
+| `AUDIT` | Diagnoza bez kodowania i bez zmian w plikach. |
+
+Nie używaj `CONTENT_FIX` do API, auth, bazy danych, workerów, providerów, security, danych użytkownika ani źródła prawdy.
+
+### Praca nad taskiem
+
+Dla zmian kodu agent może utworzyć bieżący task:
+
+```bash
+npm run task:new -- \
+  --slug simple-fix \
+  --mode MINIMAL_FIX \
+  --change-mode code-change \
+  --files src/example.js \
+  --outcome "Naprawić prosty błąd" \
+  --success "gate:local przechodzi"
+```
+
+Komenda tworzy `tasks/todo.md`, ustawia tryb i twardą allowlistę plików. Nie trzeba ręcznie wypełniać formularza.
+
+Po zakończeniu:
 
 ```bash
 npm run task:close -- --result PASS
 ```
 
-Co to robi:
-- zapisuje skonczony task do `tasks/archive/`,
-- zostawia `tasks/todo.md` w stanie `READY_FOR_NEXT_TASK`,
-- blokuje przypadkowe kodowanie na starym scope.
+Gotowy task trafia do `tasks/archive/`, a `tasks/todo.md` wraca do `READY_FOR_NEXT_TASK`.
 
-To sa narzedzia dla agenta. Nie musisz ich uruchamiac recznie, jesli pracujesz przez Codexa.
+### Audyt tylko do odczytu
 
-## Start w nowym projekcie
+Gdy prosisz o audyt, agent ma czytać kod, konfigurację i logi, ale nie może zapisywać taska, archiwum, `ParkingLot.md` ani plików projektu. Najpierw zbiera dostępne dowody. Dopiero gdy nadal brakuje informacji, zgłasza `BLOCKED_BY_MISSING_EVIDENCE` i wskazuje najmniejszy następny krok.
 
-1. Skopiuj pliki workflow do nowego repo.
-2. Uruchom:
+### Zakres i weryfikacja
+
+Każdy task kodujący wskazuje:
+
+- `Tryb zmiany: code-change` albo `release-build`,
+- `Dozwolone pliki do zmiany`,
+- kryterium sukcesu,
+- sposób sprawdzenia wyniku.
+
+Najważniejsze bramy:
+
+```bash
+npm run gate:local   # lokalnie, przed commitem
+npm run gate:pr      # przed PR albo pushem
+npm run gate:main    # alias gate:pr
+```
+
+Bramy sprawdzają formularz i świeżość taska, scope lock, rozmiar diffu, duże pliki, import boundaries oraz wymagane `lint`, `typecheck`, `test` i `build`, gdy repo zawiera aplikację.
+
+Po `PASS` nie uruchamiaj w kółko tych samych kontroli. Poszerz weryfikację dopiero po kolejnej zmianie, błędzie albo nierozstrzygniętym ryzyku.
+
+### Modele i koszty
+
+Workflow nie wymaga konkretnego modelu. Tańszy model może obsługiwać proste, dobrze określone zadania; mocniejszy model ma sens przy niepewnej diagnozie, trudnej regresji albo większym ryzyku. Model i poziom reasoning wybiera użytkownik. Nie zmieniaj ich automatycznie bez uzasadnienia.
+
+### Gdzie są zasady
+
+- [`AGENTS.md`](AGENTS.md) — krótki, zawsze ładowany kontrakt agenta.
+- [`docs/AGENT_READY_WORKFLOW.md`](docs/AGENT_READY_WORKFLOW.md) — projektowanie taska jako `REPRO -> FAIL -> FIX -> PASS`.
+- [`docs/CONTEXT_BUDGET_GUARD.md`](docs/CONTEXT_BUDGET_GUARD.md) — kontekst, skille, narzędzia i koszt pracy.
+- [`docs/ARCHITECTURE_GUARDS.md`](docs/ARCHITECTURE_GUARDS.md) — runtime, API, workerzy i dane.
+- [`docs/CODE_STRUCTURE_GUARDS.md`](docs/CODE_STRUCTURE_GUARDS.md) — granice modułów i duże pliki.
+- `scripts/` — mechaniczne kontrole taska, scope, diffu i projektu.
+
+Po utworzeniu aplikacji dopnij do `package.json` prawdziwe komendy `lint`, `typecheck`, `test` i `build`. Starter workflow nie udaje testów aplikacji, której jeszcze nie ma.
+
+## English
+
+### What it is
+
+cleanWorkflow is a small, mechanical workflow for AI-assisted projects. It keeps each change scoped, reviewable, and backed by a `PASS` or `FAIL` result.
+
+The agent works outcome-first:
+
+1. define the outcome,
+2. define success criteria,
+3. identify constraints and allowed files,
+4. collect available evidence,
+5. make the smallest safe change.
+
+The agent should inspect the facts before coding and choose verification that matches the risk.
+
+### Quick start
 
 ```bash
 npm install
 npm run hooks:install
-```
-
-3. Pracuj przez agenta albo utworz realny task komenda `npm run task:new -- --slug ... --files ...`.
-4. W `tasks/todo.md` ustaw:
-   - `Task ID`, `Task Date` i `Task Status: ACTIVE`,
-   - `Tryb zmiany: code-change`, `audit-only` albo `release-build`,
-   - `Dozwolone pliki do zmiany` jako twarda allowlista dla aktualnego taska.
-5. Dopnij projektowe komendy do `package.json`, gdy aplikacja juz istnieje:
-
-```json
-{
-  "scripts": {
-    "lint": "...",
-    "typecheck": "...",
-    "test": "...",
-    "build": "..."
-  }
-}
-```
-
-## Bramy
-
-Lokalnie:
-
-```bash
 npm run gate:local
 ```
 
-Przed PR / push:
+When using Codex, describe the goal in normal language, for example: `Fix the login bug and show how you verified it.` The agent chooses the work mode, scope, and verification.
+
+### Work modes
+
+| Mode | Use it for |
+| --- | --- |
+| `MINIMAL_FIX` | A small bugfix, up to 3 files and 50 counted lines. |
+| `CONTENT_FIX` | Copy, documentation, static content, or small UI polish without runtime or data changes. |
+| `RUNTIME_FIX` | APIs, workers, parsers, queues, caches, providers, data, or UI status. |
+| `STRUCTURE_FIX` | Module boundaries, dependencies, large files, or god files. |
+| `FEATURE` | New behavior or a new feature. |
+| `AUDIT` | Diagnosis without coding or file changes. |
+
+Do not use `CONTENT_FIX` for APIs, auth, databases, workers, providers, security, user data, or source-of-truth state.
+
+### Task lifecycle
+
+For code changes, the agent can create the current task:
 
 ```bash
-npm run gate:pr
+npm run task:new -- \
+  --slug simple-fix \
+  --mode MINIMAL_FIX \
+  --change-mode code-change \
+  --files src/example.js \
+  --outcome "Fix the simple bug" \
+  --success "gate:local passes"
 ```
 
-`gate:local` i `gate:pr` sprawdzaja:
+This creates `tasks/todo.md`, selects the work mode, and records the file allowlist. You do not need to fill the form by hand.
 
-- task ma wypelniony formularz wymagany dla wybranego trybu pracy,
-- task wskazuje największy blocker i czy aktualna praca go rusza,
-- jeśli task nie rusza blockera, musi podać kontrolowany powód i warunek powrotu,
-- task ma aktywny status, identyfikator i swieza date,
-- zmienione pliki mieszcza sie w scope locku,
-- `audit-only` nie zmienia zadnych plikow,
-- `artifacts/**` wolno zmieniac tylko w trybie `release-build`,
-- lokalny diff wzgledem `HEAD` nie przekracza limitow dla wybranego trybu pracy,
-- duze pliki nie sa powiekszane bez GOD_FILE_CHECK.
+When the work is complete:
 
-## Limity diffu
-
-`scripts/check-diff-size.js` czyta `## Tryb pracy` z `tasks/todo.md`.
-
-`CONTENT_FIX` jest dla malych zmian w copy, statycznej tresci albo prostym UI polish. Nie uzywaj go dla API, auth, DB, workerow, providerow, security, danych uzytkownika ani statusow bedacych zrodlem prawdy.
-
-| Tryb pracy | Liczone pliki | Liczone linie |
-| --- | ---: | ---: |
-| `MINIMAL_FIX` | 3 | 50 |
-| `CONTENT_FIX` | 3 | 80 |
-| `RUNTIME_FIX` | 12 | 250 |
-| `STRUCTURE_FIX` | 12 | 250 |
-| `FEATURE` | 12 | 250 |
-| `AUDIT` | 0 | 0 |
-
-Pliki workflow, dokumenty, lockfile i generowane build artefakty sa ignorowane przez licznik rozmiaru diffu, ale nadal musza przejsc scope lock z `tasks/todo.md`.
-
-## Swiezosc taska
-
-`scripts/check-task-freshness.js` blokuje prace na starym albo zamknietym tasku.
-
-Wymagane pola w `tasks/todo.md`:
-
-```md
-Task ID: 2026-05-12-short-slug
-Task Date: 2026-05-12
-Task Status: ACTIVE
+```bash
+npm run task:close -- --result PASS
 ```
 
-Guard failuje, gdy:
-- status nie jest `ACTIVE`,
-- data taska jest z przyszlosci,
-- task jest starszy niz 3 dni,
-- `Task ID` nie zaczyna sie od `Task Date`.
+The completed task is archived in `tasks/archive/`, and `tasks/todo.md` is reset to `READY_FOR_NEXT_TASK`.
 
-## Zasada
+### Read-only audits
 
-Repo trzyma procedure. Prompt trzyma outcome.
+For an audit, the agent may inspect code, configuration, and logs, but it must not write a task, archive, `ParkingLot.md`, or project files. It gathers available evidence first. If evidence is still missing, it reports `BLOCKED_BY_MISSING_EVIDENCE` and names the smallest next step.
 
-Nie doklejaj wszystkich guardow do kazdego promptu. Agent ma czytac repo i dobierac tylko to, co pasuje do taska.
+### Scope and verification
 
-## Co jest nowe wzgledem starszej wersji workflow
+Every code task declares its change mode, allowed files, success criteria, and verification method. Run:
 
-- task design ma osobny entrypoint w `docs/AGENT_READY_WORKFLOW.md`,
-- starter wyrazniej rozdziela lekki task od runtime/structure/feature,
-- `task:new` i `TASK_TEMPLATE` maja byc zgodne: krotki formularz dla lekkich taskow, pelny tylko dla ryzykownych,
-- workflow ma pilnowac nie tylko scope i diffu, ale tez zamknietego loopa z dowodem `PASS / FAIL`.
+```bash
+npm run gate:local   # locally, before committing
+npm run gate:pr      # before a PR or push
+npm run gate:main    # alias for gate:pr
+```
 
-## Po utworzeniu aplikacji
+The gates check task completeness and freshness, scope lock, diff size, large files, import boundaries, and real `lint`, `typecheck`, `test`, and `build` scripts when the repository contains an application.
 
-Ten starter pilnuje workflow. Nie zastepuje testow konkretnego projektu.
+After a `PASS`, do not repeat the same checks without a new change, failure, or unresolved risk.
 
-Po stworzeniu appki dopnij do `gate:local` i `gate:pr` realne:
+### Models and cost
 
-- lint,
-- typecheck,
-- test,
-- build.
+The workflow is model-independent. Use a lower-cost model for clear, routine work and a stronger model when diagnosis is uncertain, the regression is difficult, or the risk is high. The user chooses the model and reasoning level; the workflow does not switch models silently.
 
-## Project gates
+### Where the rules live
 
-`scripts/check-project-gates.js` wykrywa kod aplikacji w typowych katalogach (`src`, `app`, `pages`, `components`, `lib`, `server`, `tests`).
+- [`AGENTS.md`](AGENTS.md) — the short always-on agent contract.
+- [`docs/AGENT_READY_WORKFLOW.md`](docs/AGENT_READY_WORKFLOW.md) — task design as `REPRO -> FAIL -> FIX -> PASS`.
+- [`docs/CONTEXT_BUDGET_GUARD.md`](docs/CONTEXT_BUDGET_GUARD.md) — context, skills, tools, and cost.
+- [`docs/ARCHITECTURE_GUARDS.md`](docs/ARCHITECTURE_GUARDS.md) — runtime, APIs, workers, and data.
+- [`docs/CODE_STRUCTURE_GUARDS.md`](docs/CODE_STRUCTURE_GUARDS.md) — module boundaries and large files.
+- `scripts/` — mechanical task, scope, diff, and project checks.
 
-Jeśli aplikacja istnieje, guard wymaga realnych scriptow:
-- `lint`,
-- `typecheck`,
-- `test`,
-- `build`.
-
-Placeholdery typu `...` albo `TODO` failuja. W pustym starterze guard przechodzi, zeby nie udawac testow projektu, ktorego jeszcze nie ma.
-
-## Import boundaries
-
-`scripts/check-import-boundaries.js` czyta `workflow/import-boundaries.json`.
-
-Domyslny config pilnuje warstw:
-- `ui`,
-- `business`,
-- `domain`,
-- `data`,
-- `shared`.
-
-Config jest punktem startowym. Po wyborze stacka dopasuj `sourceRoots`, aliasy i wzorce plikow do realnej aplikacji. Guard sprawdza lokalne `import`, `export from` i `require`; importy z paczek npm sa ignorowane.
+Once an application exists, add real `lint`, `typecheck`, `test`, and `build` commands to `package.json`. The starter does not pretend to test an application that is not there yet.
