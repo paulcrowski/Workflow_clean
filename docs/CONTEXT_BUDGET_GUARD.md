@@ -32,9 +32,9 @@ AGENTS.md nie ma zawierać:
 
 Nie ładuj wszystkiego zawsze.
 
-Używaj:
-- docs/ARCHITECTURE_GUARDS.md tylko dla RUNTIME_FIX,
-- docs/CODE_STRUCTURE_GUARDS.md tylko dla STRUCTURE_FIX,
+Dobieraj dokumenty do problemu, niezależnie od nazwy trybu (także dla FEATURE):
+- docs/ARCHITECTURE_GUARDS.md dla runtime/API/worker/UI/provider,
+- docs/CODE_STRUCTURE_GUARDS.md dla dużych plików, granic modułów i zależności,
 - docs/CONTRACTS.md tylko gdy zmieniasz API/kontrakt,
 - docs/MODULE_MAP.md tylko gdy task dotyka kilku modułów.
 
@@ -55,9 +55,10 @@ Hooki nie mają:
 ## 4. Skille tylko gdy pasują do taska
 
 Zasada:
-- 3-5 aktywnych skills maksymalnie,
-- skill ładowany tylko dla pasującego trybu pracy,
-- nieużywane skills wyłączyć.
+- odróżniaj katalog dostępnych skilli (nazwy i opisy) od pełnych instrukcji wczytanych do zadania; nie stosuj sztywnego limitu liczby skilli,
+- opis skilla ma krótko i precyzyjnie wskazywać, kiedy go użyć; samo pokrewne słowo kluczowe nie wystarcza,
+- czytaj pełny skill tylko wtedy, gdy pomaga w aktualnym zadaniu; dodatkowe materiały doczytuj według potrzeb,
+- przy przeglądzie szukaj zbędnych lub nakładających się wyzwalaczy; zmiany skilli i konfiguracji wymagają osobnego zakresu.
 
 ## 5. MCP/tools tylko per task
 
@@ -126,7 +127,7 @@ Nie wklejaj całej konstytucji. Agent ma ją czytać z repo.
 Raz w tygodniu sprawdź:
 - długość AGENTS.md / CLAUDE.md,
 - aktywne hooki,
-- aktywne skills,
+- opisy dostępnych skilli i instrukcje faktycznie wczytywane do zadań,
 - aktywne MCP/tools,
 - średnią długość sesji,
 - czy prompt roboczy nie stał się za długi.
@@ -134,6 +135,6 @@ Raz w tygodniu sprawdź:
 Cel:
 - AGENTS.md poniżej 1200 słów,
 - tylko potrzebne hooki,
-- 3-5 aktywnych skills,
+- precyzyjne wyzwalacze skilli i tylko potrzebne instrukcje w kontekście,
 - minimalne always-on MCP,
 - prompt roboczy outcome-first.
