@@ -1,23 +1,23 @@
 # Current Task
 
-Task ID: 2026-10-02-ready-for-next-task
+Task ID: 2026-10-02-parking-lot-commit-before-close
 Task Date: 2026-10-02
-Task Status: READY_FOR_NEXT_TASK
+Task Status: ACTIVE
 
 ## Tryb pracy
-MINIMAL_FIX
+CONTENT_FIX
 
 Uzasadnienie trybu:
 Agent wybral najmniejszy bezpieczny tryb pracy.
 
 ## Cel / Outcome
-Repo czeka na następny realny task.
+Dopisać do ParkingLot.md dwujęzyczny (PL/EN) wpis o commicie przed zamknięciem taska.
 
 ## Kryteria sukcesu
-- Poprzedni task jest w archiwum.
+- ParkingLot.md ma wpis PL/EN
 
 ## Priorytet / Blocker
-Największy blocker teraz: Repo czeka na następny realny task.
+Największy blocker teraz: Dopisać do ParkingLot.md dwujęzyczny (PL/EN) wpis o commicie przed zamknięciem taska.
 Dowód blockera: polecenie użytkownika i aktualny task
 Czy ten task rusza blocker: TAK
 Jeśli NIE, powód: NOT_APPLICABLE
@@ -25,17 +25,18 @@ Dlaczego mimo to robimy teraz: nie dotyczy
 Warunek powrotu do blockera: nie dotyczy
 
 ## Kontekst dla agenta
-Moduł: workflow task lifecycle
+Moduł: workflow parking lot
 Tryb zmiany: code-change
 Dozwolone pliki do zmiany:
+- ParkingLot.md
 - tasks/todo.md
 - tasks/archive/**
 Kontrakty do przeczytania: tylko pliki potrzebne do taska
 Czego nie ruszać: pliki poza zakresem
 
 ## Zakres
-Moduł: workflow task lifecycle
-Pliki: tasks/todo.md, tasks/archive/**
+Moduł: workflow parking lot
+Pliki: ParkingLot.md
 
 ## Escalation
 Czy brakuje danych do bezpiecznej zmiany?
@@ -55,7 +56,7 @@ Zmiana jest wymagana dla aktualnego outcome.
 Root cause: ustalic przed kodem.
 Dowód: wskazac przed finalnym PASS.
 Minimalny fix: najmniejszy diff w allowliscie.
-Test: najmniejsza komenda potwierdzajaca fix.
+Test: komenda albo visual/render proof dobrany przez agenta.
 
 ## Plan
 - [ ] Przeczytać tylko pliki potrzebne do zmiany.
@@ -70,6 +71,6 @@ Expected result: PASS.
 ## Review / Wyniki
 Co zmieniono: nie zakończono.
 Jak sprawdzono: nie uruchomiono jeszcze.
-PASS / FAIL: PASS
+PASS / FAIL: Nie uruchomiono testów
 Ryzyka: brak finalnej weryfikacji.
 Follow-up: brak.
