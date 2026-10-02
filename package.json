@@ -1,8 +1,7 @@
 {
   "name": "workflow-clean",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Minimalny workflow do pracy z agentami AI: tryby pracy, scope lock i bramy PASS/FAIL.",
   "directories": {
     "doc": "docs"
   },
@@ -11,7 +10,7 @@
     "task:new": "node scripts/task-lifecycle.js new",
     "task:close": "node scripts/task-lifecycle.js close",
     "gate:local": "npm run check:task && npm run check:task-freshness && npm run check:scope && npm run check:diff-size && npm run check:godfiles && npm run check:project-gates && npm run check:import-boundaries",
-    "gate:pr": "npm run check:task && npm run check:task-freshness && npm run check:scope && npm run check:diff-size && npm run check:godfiles && npm run check:project-gates && npm run check:import-boundaries",
+    "gate:pr": "npm run gate:local",
     "gate:main": "npm run gate:pr",
     "check:task": "node scripts/check-task.js",
     "check:task-freshness": "node scripts/check-task-freshness.js",

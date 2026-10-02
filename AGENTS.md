@@ -27,6 +27,7 @@ Zasady obowiązują niezależnie od wybranego modelu. Jawne instrukcje użytkown
 Nie stosuj pełnej procedury do drobnego fixa bez runtime/danych/krytycznego flow.
 `CONTENT_FIX` nie dotyka API, auth, DB, workerów, providerów, security ani źródła prawdy.
 Użytkownik nie wypełnia taska ręcznie. Agent wybiera najmniejszy bezpieczny tryb i uruchamia `task:new`.
+Jeśli repo nie ma `scripts/` ani `package.json` z `task:new` (wersja lite), opisz cel, tryb, dozwolone pliki i wynik w rozmowie, a weryfikację dobierz do zmiany.
 Dla `audit-only` wyjątek: opisz cel, zakres i wynik w rozmowie; nie uruchamiaj `task:new` ani `task:close`, nie zapisuj taska, archiwum ani Parking Lot. Ta zasada obowiązuje także przy czytaniu dokumentów on-demand.
 
 ## Co Czytać On-Demand

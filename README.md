@@ -21,6 +21,14 @@ Workflow porządkuje pracę agenta wokół pięciu pytań:
 
 Agent nie powinien zaczynać od kodowania. Najpierw dobiera tryb pracy, sprawdza fakty, a po zmianie uruchamia kontrole odpowiednie do ryzyka.
 
+### Start bez programowania (lite)
+
+Nie musisz od razu instalować skryptów. Skopiuj do swojego projektu dwa pliki: `AGENTS.md` i `CLAUDE.md`. Codex czyta `AGENTS.md`, a Claude Code przez `CLAUDE.md` wczytuje ten sam plik.
+
+Możesz też poprosić agenta: `Dodaj do tego projektu AGENTS.md i CLAUDE.md z github.com/paulcrowski/Workflow_clean. Niczego nie nadpisuj bez pytania.`
+
+W wersji lite agent opisuje task w rozmowie zamiast `task:new`. Pełną wersję ze skryptami i bramami dodasz, gdy projekt urośnie.
+
 ### Szybki start
 
 ```bash
@@ -84,10 +92,12 @@ Każdy task kodujący wskazuje:
 Najważniejsze bramy:
 
 ```bash
-npm run gate:local   # lokalnie, przed commitem
-npm run gate:pr      # przed PR albo pushem
+npm run gate:local   # lokalnie; hook pre-commit
+npm run gate:pr      # to samo co gate:local; hook pre-push i GitHub Actions
 npm run gate:main    # alias gate:pr
 ```
+
+Wszystkie trzy uruchamiają ten sam zestaw kontroli. Różni je tylko moment. GitHub Actions uruchamia `gate:pr` wyłącznie przy pull requeście do `main`. Bezpośredni push na `main` sprawdza tylko lokalny hook `pre-push`, więc po sklonowaniu repo uruchom `npm run hooks:install`.
 
 Bramy sprawdzają formularz i świeżość taska, scope lock, rozmiar diffu, duże pliki, import boundaries oraz wymagane `lint`, `typecheck`, `test` i `build`, gdy repo zawiera aplikację.
 
@@ -123,6 +133,14 @@ The agent works outcome-first:
 5. make the smallest safe change.
 
 The agent should inspect the facts before coding and choose verification that matches the risk.
+
+### Start without coding (lite)
+
+You do not need the scripts on day one. Copy two files into your project: `AGENTS.md` and `CLAUDE.md`. Codex reads `AGENTS.md`; Claude Code loads the same file through `CLAUDE.md`.
+
+You can also ask the agent: `Add AGENTS.md and CLAUDE.md from github.com/paulcrowski/Workflow_clean to this project. Do not overwrite anything without asking.`
+
+In lite mode the agent describes the task in the conversation instead of running `task:new`. Add the full version with scripts and gates when the project grows.
 
 ### Quick start
 
@@ -180,10 +198,12 @@ For an audit, the agent may inspect code, configuration, and logs, but it must n
 Every code task declares its change mode, allowed files, success criteria, and verification method. Run:
 
 ```bash
-npm run gate:local   # locally, before committing
-npm run gate:pr      # before a PR or push
+npm run gate:local   # locally; pre-commit hook
+npm run gate:pr      # same as gate:local; pre-push hook and GitHub Actions
 npm run gate:main    # alias for gate:pr
 ```
+
+All three run the same checks; only the moment differs. GitHub Actions runs `gate:pr` only on pull requests to `main`. A direct push to `main` is checked only by the local `pre-push` hook, so run `npm run hooks:install` after cloning.
 
 The gates check task completeness and freshness, scope lock, diff size, large files, import boundaries, and real `lint`, `typecheck`, `test`, and `build` scripts when the repository contains an application.
 

@@ -1,4 +1,6 @@
-Startuj od AGENTS.md.
+@AGENTS.md
+
+AGENTS.md jest wczytany powyżej i jest głównym kontraktem.
 AGENT_DEV_POLICY.md czytaj tylko wtedy, gdy AGENTS.md albo aktualny task wyraźnie tego wymaga.
 
 Dla runtime/API/worker/UI stosuj docs/ARCHITECTURE_GUARDS.md.
